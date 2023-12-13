@@ -24,17 +24,20 @@ export default defineConfig(({ mode, command }) => {
       extensions: ['.mjs', '.js', '.ts', '.jsx', '.tsx', '.json', '.vue']
     },
     // vite 相关配置
-    server: {
-      port: 80,
-      host: true,
+    server: {    
+      host: '0.0.0.0', 
       open: true,
+      // port: 8012, 
       proxy: {
         // https://cn.vitejs.dev/config/#server-proxy
-        '/dev-api': {
-          target: 'http://localhost:8080',
-          changeOrigin: true,
-          rewrite: (p) => p.replace(/^\/dev-api/, '')
+        '/api': {
+          target: 'https://127.0.0.1:7062',
+          ws: true,        //如果要代理 websockets，配置这个参数
+          changeOrigin: true,  //是否跨域
+          secure: false,  // 如果是https接口，需要配置这个参数
+          rewrite: (p) => p.replace(/^\/api/, '') //重写url，注意一定要和请求名一致
         }
+         
       }
     },
     //fix:error:stdin>:7356:1: warning: "@charset" must be the first rule in the file

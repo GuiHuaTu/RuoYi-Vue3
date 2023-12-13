@@ -11,14 +11,21 @@ let downloadLoadingInstance;
 // 是否显示重新登录
 export let isRelogin = { show: false };
 
+
+
+// Content-Type 响应头
 axios.defaults.headers['Content-Type'] = 'application/json;charset=utf-8'
+// 允许跨域
+axios.defaults.withCredentials = true
 // 创建axios实例
 const service = axios.create({
   // axios中请求配置有baseURL选项，表示请求URL公共部分
-  baseURL: import.meta.env.VITE_APP_BASE_API,
+  baseURL: '/api',
   // 超时
   timeout: 10000
 })
+
+
 
 // request拦截器
 service.interceptors.request.use(config => {
@@ -28,7 +35,7 @@ service.interceptors.request.use(config => {
   const isRepeatSubmit = (config.headers || {}).repeatSubmit === false
   if (getToken() && !isToken) {
     config.headers['Authorization'] = 'Bearer ' + getToken() // 让每个请求携带自定义token 请根据实际情况自行修改
-  }
+  } 
   // get请求映射params参数
   if (config.method === 'get' && config.params) {
     let url = config.url + '?' + tansParams(config.params);
@@ -86,6 +93,7 @@ service.interceptors.response.use(res => {
         isRelogin.show = true;
         ElMessageBox.confirm('登录状态已过期，您可以继续留在该页面，或者重新登录', '系统提示', { confirmButtonText: '重新登录', cancelButtonText: '取消', type: 'warning' }).then(() => {
           isRelogin.show = false;
+          debugger
           useUserStore().logOut().then(() => {
             location.href = '/index';
           })

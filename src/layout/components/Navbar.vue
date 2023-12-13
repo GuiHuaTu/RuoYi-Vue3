@@ -88,6 +88,7 @@ function logout() {
     cancelButtonText: '取消',
     type: 'warning'
   }).then(() => {
+    debugger
     userStore.logOut().then(() => {
       location.href = '/index';
     })
