@@ -2,6 +2,8 @@ import { login, logout, getInfo } from '@/api/login'
 import { getToken, setToken, removeToken } from '@/utils/auth'
 import defAva from '@/assets/images/profile.jpg'
 
+import { encryptLogin, decryptLogin } from '@/utils/jsencrypt'
+
 const useUserStore = defineStore(
   'user',
   {
@@ -16,8 +18,10 @@ const useUserStore = defineStore(
     actions: {
       // 登录
       login(userInfo) {
-        const username = userInfo.username.trim()
-        const password = userInfo.password
+        const username = encryptLogin( userInfo.username.trim())//加密后传输
+        const password = encryptLogin( userInfo.password)//加密后传输
+        // const username = userInfo.username.trim()
+        // const password = userInfo.password
         const code = userInfo.code
         const uuid = userInfo.uuid
         return new Promise((resolve, reject) => {
