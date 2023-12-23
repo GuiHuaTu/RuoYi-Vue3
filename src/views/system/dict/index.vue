@@ -236,7 +236,7 @@ function handleDelete(row) {
 }
 /** 导出按钮操作 */
 function handleExport() {
-   proxy.download("system/dict/type/export", {
+   proxy.download("dictType/export", {
       ...queryParams.value
    }, `dict_${new Date().getTime()}.xls`);
 }
