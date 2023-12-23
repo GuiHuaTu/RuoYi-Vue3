@@ -270,7 +270,7 @@ function handleDelete(row) {
 function handleExport() {
   proxy.download("system/post/export", {
     ...queryParams.value
-  }, `post_${new Date().getTime()}.xlsx`);
+  }, `post_${new Date().getTime()}.xls`);
 }
 
 getList();

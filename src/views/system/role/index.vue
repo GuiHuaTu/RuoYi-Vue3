@@ -330,7 +330,7 @@ function handleDelete(row) {
 function handleExport() {
   proxy.download("system/role/export", {
     ...queryParams.value,
-  }, `role_${new Date().getTime()}.xlsx`);
+  }, `role_${new Date().getTime()}.xls`);
 }
 /** 多选框选中数据 */
 function handleSelectionChange(selection) {

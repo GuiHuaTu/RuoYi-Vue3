@@ -476,7 +476,7 @@ function handleDelete(row) {
 function handleExport() {
   proxy.download("monitor/job/export", {
     ...queryParams.value,
-  }, `job_${new Date().getTime()}.xlsx`);
+  }, `job_${new Date().getTime()}.xls`);
 }
 
 getList();

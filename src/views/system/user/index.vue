@@ -455,7 +455,7 @@ function handleDelete(row) {
 function handleExport() {
   proxy.download("system/user/export", {
     ...queryParams.value,
-  },`user_${new Date().getTime()}.xlsx`);
+  },`user_${new Date().getTime()}.xls`);
 };
 /** 用户状态修改  */
 function handleStatusChange(row) {
@@ -514,7 +514,7 @@ function handleImport() {
 /** 下载模板操作 */
 function importTemplate() {
   proxy.download("system/user/importTemplate", {
-  }, `user_template_${new Date().getTime()}.xlsx`);
+  }, `user_template_${new Date().getTime()}.xls`);
 };
 /**文件上传中处理 */
 const handleFileUploadProgress = (event, file, fileList) => {
