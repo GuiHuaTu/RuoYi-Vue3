@@ -3,10 +3,11 @@ import request from '@/utils/request'
 // 登录方法
 export function login(username, password, code, uuid) {
   const data = {
-    username:username,
-    password:password,
-    code:"",
-    uuid:""
+    username,
+    password,
+    code,
+    uuid,
+    plaintextPwd:false
   }
   return request({
     url: '/Login/login',
@@ -19,7 +20,7 @@ export function login(username, password, code, uuid) {
   })
 }
 
-// 注册方法
+// 注册方法--暂不实现
 export function register(data) {
   return request({
     url: '/register',
