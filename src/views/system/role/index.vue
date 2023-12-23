@@ -328,7 +328,7 @@ function handleDelete(row) {
 }
 /** 导出按钮操作 */
 function handleExport() {
-  proxy.download("system/role/export", {
+  proxy.download("role/export", {
     ...queryParams.value,
   }, `role_${new Date().getTime()}.xls`);
 }
