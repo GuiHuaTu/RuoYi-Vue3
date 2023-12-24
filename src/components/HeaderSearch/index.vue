@@ -19,7 +19,7 @@
 
 <script setup>
 import Fuse from 'fuse.js'
-import { getNormalPath } from '@/utils/scada'
+import { getNormalPath } from '@/utils/tool'
 import { isHttp } from '@/utils/validate'
 import usePermissionStore from '@/store/modules/permission'
 
@@ -84,7 +84,6 @@ function initFuse(list) {
 // And generate the internationalized title
 function generateRoutes(routes, basePath = '', prefixTitle = []) {
   let res = []
-
   for (const r of routes) {
     // skip hidden router
     if (r.hidden) { continue }

@@ -36,6 +36,7 @@ const usePermissionStore = defineStore(
         return new Promise(resolve => {
           // 向后端请求路由数据
           getRouters().then(res => {
+            console.log(res.data);
             const sdata = JSON.parse(JSON.stringify(res.data))
             const rdata = JSON.parse(JSON.stringify(res.data))
             const defaultData = JSON.parse(JSON.stringify(res.data))
@@ -128,7 +129,10 @@ export function filterDynamicRoutes(routes) {
   return res
 }
 
+
+
 export const loadView = (view) => {
+  
   let res;
   for (const path in modules) {
     const dir = path.split('views/')[1].split('.vue')[0];

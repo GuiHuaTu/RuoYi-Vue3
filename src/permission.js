@@ -14,7 +14,6 @@ NProgress.configure({ showSpinner: false });
 const whiteList = ['/login', '/register'];
 
 router.beforeEach((to, from, next) => {
-  debugger;
   NProgress.start()
   if (getToken()) {
     to.meta.title && useSettingsStore().setTitle(to.meta.title)
@@ -23,9 +22,9 @@ router.beforeEach((to, from, next) => {
       next({ path: '/' })
       NProgress.done()
     } 
-    // else if (whiteList.indexOf(to.path) !== -1) {
-    //   next()
-    // } 
+    else if (whiteList.indexOf(to.path) !== -1) {
+      next()
+    } 
     else {
       if (useUserStore().roles.length === 0) {
         isRelogin.show = true
@@ -33,8 +32,7 @@ router.beforeEach((to, from, next) => {
         useUserStore().getInfo().then(() => {
           isRelogin.show = false
           usePermissionStore().generateRoutes().then(accessRoutes => {
-
-            // debugger
+ 
             // 根据roles权限生成可访问的路由表
             accessRoutes.forEach(route => {
               if (!isHttp(route.path)) {
@@ -46,7 +44,6 @@ router.beforeEach((to, from, next) => {
             return
           })
         }).catch(err => {
-          debugger
           useUserStore().logOut().then(() => {
             ElMessage.error(err)
             next({ path: '/' })

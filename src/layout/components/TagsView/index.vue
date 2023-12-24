@@ -43,7 +43,7 @@
 
 <script setup>
 import ScrollPane from './ScrollPane'
-import { getNormalPath } from '@/utils/scada'
+import { getNormalPath } from '@/utils/tool'
 import useTagsViewStore from '@/store/modules/tagsView'
 import useSettingsStore from '@/store/modules/settings'
 import usePermissionStore from '@/store/modules/permission'
@@ -107,6 +107,7 @@ function isLastView() {
   }
 }
 function filterAffixTags(routes, basePath = '') {
+  
   let tags = []
   routes.forEach(route => {
     if (route.meta && route.meta.affix) {
