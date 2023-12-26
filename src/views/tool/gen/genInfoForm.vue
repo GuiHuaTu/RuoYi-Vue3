@@ -94,7 +94,7 @@
           <tree-select
             v-model:value="info.parentMenuId"
             :options="menuOptions"
-            :objMap="{ value: 'menuId', label: 'menuName', children: 'children' }"
+            :objMap="{ value: 'menuId', label: 'menuName', children: 'childMenu' }"
             placeholder="请选择系统菜单"
           />
         </el-form-item>
