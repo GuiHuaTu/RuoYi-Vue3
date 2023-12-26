@@ -320,8 +320,8 @@ function getList() {
 function getTreeselect() {
   menuOptions.value = [];
   listMenu().then(response => {
-    const menu = { menuId: 0, menuName: "主类目", children: [] };
-    menu.children = proxy.handleTree(response.data, "menuId");
+    const menu = { menuId: 0, menuName: "主类目", childMenu: [] };
+    menu.childMenu = proxy.handleTree(response.data, "menuId");
     menuOptions.value.push(menu);
   });
 }

@@ -115,16 +115,16 @@
          </el-table-column>
          <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
             <template #default="scope">
-              <el-tooltip content="修改" placement="top" v-if="scope.row.roleId !== 1">
+              <el-tooltip content="修改" placement="top" v-if="scope.row.roleId !== 0">
                 <el-button link type="primary" icon="Edit" @click="handleUpdate(scope.row)" v-hasPermi="['system:role:edit']"></el-button>
               </el-tooltip>
-              <el-tooltip content="删除" placement="top" v-if="scope.row.roleId !== 1">
+              <el-tooltip content="删除" placement="top" v-if="scope.row.roleId !== 0">
                 <el-button link type="primary" icon="Delete" @click="handleDelete(scope.row)" v-hasPermi="['system:role:remove']"></el-button>
               </el-tooltip>
-              <el-tooltip content="数据权限" placement="top" v-if="scope.row.roleId !== 1">
+              <el-tooltip content="数据权限" placement="top" v-if="scope.row.roleId !== 0">
                 <el-button link type="primary" icon="CircleCheck" @click="handleDataScope(scope.row)" v-hasPermi="['system:role:edit']"></el-button>
               </el-tooltip>
-              <el-tooltip content="分配用户" placement="top" v-if="scope.row.roleId !== 1">
+              <el-tooltip content="分配用户" placement="top" v-if="scope.row.roleId !== 0">
                 <el-button link type="primary" icon="User" @click="handleAuthUser(scope.row)" v-hasPermi="['system:role:edit']"></el-button>
               </el-tooltip>
             </template>
@@ -177,10 +177,10 @@
                   :data="menuOptions"
                   show-checkbox
                   ref="menuRef"
-                  node-key="id"
+                  node-key="menuId"
                   :check-strictly="!form.menuCheckStrictly"
                   empty-text="加载中，请稍候"
-                  :props="{ label: 'label', children: 'children' }"
+                  :props="{ label: 'menuName', children: 'childMenu' }"
                ></el-tree>
             </el-form-item>
             <el-form-item label="备注">
@@ -224,10 +224,10 @@
                   show-checkbox
                   default-expand-all
                   ref="deptRef"
-                  node-key="id"
+                  node-key="deptId"
                   :check-strictly="!form.deptCheckStrictly"
                   empty-text="加载中，请稍候"
-                  :props="{ label: 'label', children: 'children' }"
+                  :props="{ label: 'deptName', children: 'childDept' }"
                ></el-tree>
             </el-form-item>
          </el-form>
@@ -422,7 +422,7 @@ function handleUpdate(row) {
     open.value = true;
     nextTick(() => {
       roleMenu.then((res) => {
-        let checkedKeys = res.checkedKeys;
+        let checkedKeys = res.data.menuIds;
         checkedKeys.forEach((v) => {
           nextTick(() => {
             menuRef.value.setChecked(v, true, false);
@@ -436,14 +436,14 @@ function handleUpdate(row) {
 /** 根据角色ID查询菜单树结构 */
 function getRoleMenuTreeselect(roleId) {
   return roleMenuTreeselect(roleId).then(response => {
-    menuOptions.value = response.menus;
+    menuOptions.value = response.data.menus;
     return response;
   });
 }
 /** 根据角色ID查询部门树结构 */
 function getDeptTree(roleId) {
   return deptTreeSelect(roleId).then(response => {
-    deptOptions.value = response.depts;
+    deptOptions.value = response.data.depts;
     return response;
   });
 }
@@ -530,7 +530,7 @@ function handleDataScope(row) {
       deptTreeSelect.then(res => {
         nextTick(() => {
           if (deptRef.value) {
-            deptRef.value.setCheckedKeys(res.checkedKeys);
+            deptRef.value.setCheckedKeys(res.data.deptIds);
           }
         });
       });

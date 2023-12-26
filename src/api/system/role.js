@@ -20,7 +20,7 @@ export function getRole(roleId) {
 // 新增角色
 export function addRole(data) {
   return request({
-    url: '/roleaddRole',
+    url: '/role/addRole',
     method: 'post',
     data: data
   })
@@ -47,7 +47,7 @@ export function delRole(roleId) {
 // 角色数据权限
 export function dataScope(data) {
   return request({
-    url: '/system/role/dataScope',
+    url: '/role/dataScope',
     method: 'put',
     data: data
   })
@@ -60,7 +60,7 @@ export function changeRoleStatus(roleId, status) {
     status
   }
   return request({
-    url: '/system/role/changeStatus',
+    url: '/role/changeStatus',
     method: 'put',
     data: data
   })
@@ -69,7 +69,7 @@ export function changeRoleStatus(roleId, status) {
 // 查询角色已授权用户列表
 export function allocatedUserList(query) {
   return request({
-    url: '/system/role/authUser/allocatedList',
+    url: '/role/allocatedUserList',
     method: 'get',
     params: query
   })
@@ -78,7 +78,7 @@ export function allocatedUserList(query) {
 // 查询角色未授权用户列表
 export function unallocatedUserList(query) {
   return request({
-    url: '/system/role/authUser/unallocatedList',
+    url: '/role/unallocatedUserList',
     method: 'get',
     params: query
   })
@@ -87,7 +87,7 @@ export function unallocatedUserList(query) {
 // 取消用户授权角色
 export function authUserCancel(data) {
   return request({
-    url: '/system/role/authUser/cancel',
+    url: '/role/authUserCancel',
     method: 'put',
     data: data
   })
@@ -96,7 +96,7 @@ export function authUserCancel(data) {
 // 批量取消用户授权角色
 export function authUserCancelAll(data) {
   return request({
-    url: '/system/role/authUser/cancelAll',
+    url: '/role/authUserCancelAll',
     method: 'put',
     params: data
   })
@@ -105,7 +105,7 @@ export function authUserCancelAll(data) {
 // 授权用户选择
 export function authUserSelectAll(data) {
   return request({
-    url: '/system/role/authUser/selectAll',
+    url: '/role/authUserSelectAll',
     method: 'put',
     params: data
   })
@@ -114,7 +114,7 @@ export function authUserSelectAll(data) {
 // 根据角色ID查询部门树结构
 export function deptTreeSelect(roleId) {
   return request({
-    url: '/system/role/deptTree/' + roleId,
+    url: '/role/deptTreeSelect/' + roleId,
     method: 'get'
   })
 }
