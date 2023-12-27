@@ -19,11 +19,10 @@
                 <el-button icon="Refresh" @click="resetQuery">重置</el-button>
             </el-form-item>
             <el-row>
-                <el-form-item label="起止时间" style="width: 508px">
-                    <el-date-picker v-model="dateRange" value-format="YYYY-MM-DD HH:mm:ss" type="datetimerange"
-                        range-separator="-" :shortcuts="shortcuts" start-placeholder="开始日期"
-                        end-placeholder="结束日期"></el-date-picker>
-                </el-form-item>
+            <el-form-item label="起止时间" style="width: 508px">
+                <el-date-picker v-model="dateRange" value-format="YYYY-MM-DD HH:mm:ss" type="datetimerange" range-separator="-"
+                    :shortcuts="shortcuts" start-placeholder="开始日期" end-placeholder="结束日期"></el-date-picker>
+            </el-form-item>
 
             </el-row>
         </el-form>
@@ -35,11 +34,35 @@
                             <info-filled />
                         </el-icon>
                     </template>
-                    <div id="mainLine">
+                    <div>
+                        <PlotFigure :options="{
+                            x: {
+                                label:'时间'
+                            },
+                            y: {
+                                label:'点位值',
+                                grid:true
+                            },
+                            marks: [
+                                // Plot.ruleY([0]),
+                                Plot.lineY(lineYList, { x: 'time', y: 'tagValue' }),
+                            ],
+                        }" />
                     </div>
                 </el-collapse-item>
                 <el-collapse-item title="Table" name="2">
-                    <div id="main">
+                    <div>
+                        <el-card class="box-card">
+                            <template #header>
+                                <div class="card-header">
+                                    <span>Card name</span>
+                                    <el-button class="button" text>Operation button</el-button>
+                                </div>
+                            </template>
+                            <div v-for="o in 4" :key="o" class="text item">{{ 'List item ' + o }}</div>
+                            <template #footer>Footer content</template>
+                        </el-card>
+
                     </div>
                 </el-collapse-item>
             </el-collapse>
@@ -48,139 +71,11 @@
     </div>
 </template>
 
-
-<style scoped>
-/* 样式这里要设置长宽，不然显示不出来 */
-#main {
-    width: 600px;
-    height: 400px;
-}
-
-/* 样式这里要设置长宽，不然显示不出来 */
-#mainLine {
-    width: 1200px;
-    height: 400px;
-}
-</style >
-
-
-<script setup name="plcData">
-import * as echarts from 'echarts';
-onMounted(async () => {
-    setTimeout(() => { aa() }, 1000)
-})
-const aa = () => {
-    var dom = document.getElementById('main');
-    var myChart = echarts.init(dom);
-    window.addEventListener('resize', function () {//自适应大小
-        myChart.resize(600, 400);
-    });
-    // 绘制图表
-    myChart.setOption({
-        title: {
-            text: 'ECharts 入门示例'
-        },
-        tooltip: {},
-        xAxis: {
-            data: ['衬衫', '羊毛衫', '雪纺衫', '裤子', '高跟鞋', '袜子']
-        },
-        yAxis: {},
-        series: [
-            {
-                name: '销量',
-                type: 'bar',
-                data: [5, 20, 36, 10, 10, 20]
-            }
-        ]
-    });
-
-    var chartDomLine = document.getElementById('mainLine');
-    var myChartLine = echarts.init(chartDomLine);
-    var option;
-
-    function randomData() {
-        now = new Date(+now + oneDay);
-        value = value + Math.random() * 21 - 10;
-        return {
-            name: now.toString(),
-            value: [
-                [now.getFullYear(), now.getMonth() + 1, now.getDate()].join('/'),
-                Math.round(value)
-            ]
-        };
-    }
-    let data = [];
-    let now = new Date(1997, 9, 3);
-    let oneDay = 24 * 3600 * 1000;
-    let value = Math.random() * 1000;
-    for (var i = 0; i < 1000; i++) {
-        data.push(randomData());
-    }
-    option = {
-        title: {
-            text: 'Dynamic Data & Time Axis'
-        },
-        tooltip: {
-            trigger: 'axis',
-            formatter: function (params) {
-                params = params[0];
-                var date = new Date(params.name);
-                return (
-                    date.getDate() +
-                    '/' +
-                    (date.getMonth() + 1) +
-                    '/' +
-                    date.getFullYear() +
-                    ' : ' +
-                    params.value[1]
-                );
-            },
-            axisPointer: {
-                animation: false
-            }
-        },
-        xAxis: {
-            type: 'time',
-            splitLine: {
-                show: false
-            }
-        },
-        yAxis: {
-            type: 'value',
-            boundaryGap: [0, '100%'],
-            splitLine: {
-                show: false
-            }
-        },
-        series: [
-            {
-                name: 'Fake Data',
-                type: 'line',
-                showSymbol: false,
-                data: data
-            }
-        ]
-    };
-    setInterval(function () {
-        for (var i = 0; i < 5; i++) {
-            data.shift();
-            data.push(randomData());
-        }
-        myChartLine.setOption({
-            series: [
-                {
-                    data: data
-                }
-            ]
-        });
-    }, 1000);
-
-    option && myChartLine.setOption(option);
-}
-
-
-
-import { parseTime, getDate, getTime, getDateTime } from '@/utils/tool'
+<script setup>
+import * as Plot from "@observablehq/plot";
+import PlotFigure from "./js/PlotFigure.js";
+// import penguins from "./penguins.json";//从json文件加载数据
+// import { parseTime, getDate,getTime,getDateTime} from '@/utils/tool'
 
 import { queryPlcLog } from "@/api/influxDb/influx";
 
@@ -193,10 +88,6 @@ const single = ref(true);
 const multiple = ref(true);
 const total = ref(0);
 const title = ref("");
-// const dateRange = ref < [Date, Date] > ([
-//     new Date(2000, 10, 10, 10, 10),
-//     new Date(2000, 10, 11, 10, 10),
-// ]);
 
 const { proxy } = getCurrentInstance();
 const dateRange = ref('');
@@ -237,8 +128,8 @@ const data = reactive({
         plcCode: 'S1500',
         tagCode: 'Tag_1',
         field: 'tag_value',
-        startTime: '',
-        stopTime: '',
+        startTime:'',
+        stopTime:'',
     },
     rules: {
         plcCode: [{ required: true, message: "不能为空", trigger: "blur" }],
@@ -252,7 +143,7 @@ const { queryParams, form, rules } = toRefs(data);
 const activeNames = ref(['1', '2'])
 
 
-/** 查询列表 */
+/** 查询角色列表 */
 function getList() {
     loading.value = true;
     debugger

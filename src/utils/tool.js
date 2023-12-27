@@ -46,6 +46,33 @@ export function parseTime(time, pattern) {
   return time_str
 }
 
+// 获取当前日期 yy-mm-dd
+export function getDate() {
+  let yy = new Date().getFullYear();
+  let mm = new Date().getMonth() + 1;
+  let dd = new Date().getDate();
+  return yy + '-' + mm + '-' + dd;
+}
+// 获取当前日期 hh-mm-ss
+export function getTime() {
+  let hh = new Date().getHours();
+  let mf = new Date().getMinutes() < 10 ? '0' + new Date().getMinutes() : new Date().getMinutes();
+  let ss = new Date().getSeconds() < 10 ? '0' + new Date().getSeconds() : new Date().getSeconds();
+  return hh + ':' + mf + ':' + ss;
+}
+
+
+// 获取当前日期数据 yy-mm-dd hh:mf:ss
+export function getDateTime() {
+  let yy = new Date().getFullYear();
+  let mm = new Date().getMonth() + 1;
+  let dd = new Date().getDate();
+  let hh = new Date().getHours();
+  let mf = new Date().getMinutes() < 10 ? '0' + new Date().getMinutes() : new Date().getMinutes();
+  let ss = new Date().getSeconds() < 10 ? '0' + new Date().getSeconds() : new Date().getSeconds();
+  return yy + '-' + mm + '-' + dd + ' ' + hh + ':' + mf + ':' + ss;
+}
+
 // 表单重置
 export function resetForm(refName) {
   if (this.$refs[refName]) {

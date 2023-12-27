@@ -66,123 +66,12 @@
 
 <script setup name="plcData">
 import * as echarts from 'echarts';
-onMounted(async () => {
-    setTimeout(() => { aa() }, 1000)
-})
-const aa = () => {
-    var dom = document.getElementById('main');
-    var myChart = echarts.init(dom);
-    window.addEventListener('resize', function () {//自适应大小
-        myChart.resize(600, 400);
-    });
-    // 绘制图表
-    myChart.setOption({
-        title: {
-            text: 'ECharts 入门示例'
-        },
-        tooltip: {},
-        xAxis: {
-            data: ['衬衫', '羊毛衫', '雪纺衫', '裤子', '高跟鞋', '袜子']
-        },
-        yAxis: {},
-        series: [
-            {
-                name: '销量',
-                type: 'bar',
-                data: [5, 20, 36, 10, 10, 20]
-            }
-        ]
-    });
 
-    var chartDomLine = document.getElementById('mainLine');
-    var myChartLine = echarts.init(chartDomLine);
-    var option;
-
-    function randomData() {
-        now = new Date(+now + oneDay);
-        value = value + Math.random() * 21 - 10;
-        return {
-            name: now.toString(),
-            value: [
-                [now.getFullYear(), now.getMonth() + 1, now.getDate()].join('/'),
-                Math.round(value)
-            ]
-        };
-    }
-    let data = [];
-    let now = new Date(1997, 9, 3);
-    let oneDay = 24 * 3600 * 1000;
-    let value = Math.random() * 1000;
-    for (var i = 0; i < 1000; i++) {
-        data.push(randomData());
-    }
-    option = {
-        title: {
-            text: 'Dynamic Data & Time Axis'
-        },
-        tooltip: {
-            trigger: 'axis',
-            formatter: function (params) {
-                params = params[0];
-                var date = new Date(params.name);
-                return (
-                    date.getDate() +
-                    '/' +
-                    (date.getMonth() + 1) +
-                    '/' +
-                    date.getFullYear() +
-                    ' : ' +
-                    params.value[1]
-                );
-            },
-            axisPointer: {
-                animation: false
-            }
-        },
-        xAxis: {
-            type: 'time',
-            splitLine: {
-                show: false
-            }
-        },
-        yAxis: {
-            type: 'value',
-            boundaryGap: [0, '100%'],
-            splitLine: {
-                show: false
-            }
-        },
-        series: [
-            {
-                name: 'Fake Data',
-                type: 'line',
-                showSymbol: false,
-                data: data
-            }
-        ]
-    };
-    setInterval(function () {
-        for (var i = 0; i < 5; i++) {
-            data.shift();
-            data.push(randomData());
-        }
-        myChartLine.setOption({
-            series: [
-                {
-                    data: data
-                }
-            ]
-        });
-    }, 1000);
-
-    option && myChartLine.setOption(option);
-}
-
-
-
-import { parseTime, getDate, getTime, getDateTime } from '@/utils/tool'
-
+import echartLineDemo from "./js/echartLineDemo.js";
+import echartLinePlc from "./js/echartLinePlc.js";
+import { dataLine as dataLinePlc ,getList as getPlcList} from "./js/echartLinePlc.js";
 import { queryPlcLog } from "@/api/influxDb/influx";
+
 
 const lineYList = ref([]);
 const open = ref(false);
@@ -193,10 +82,6 @@ const single = ref(true);
 const multiple = ref(true);
 const total = ref(0);
 const title = ref("");
-// const dateRange = ref < [Date, Date] > ([
-//     new Date(2000, 10, 10, 10, 10),
-//     new Date(2000, 10, 11, 10, 10),
-// ]);
 
 const { proxy } = getCurrentInstance();
 const dateRange = ref('');
@@ -246,6 +131,7 @@ const data = reactive({
         field: [{ required: true, message: "不能为空", trigger: "blur" }]
     },
 });
+const dataLine = [];
 
 const { queryParams, form, rules } = toRefs(data);
 
@@ -258,8 +144,15 @@ function getList() {
     debugger
     queryParams.value.startTime = dateRange.value[0]
     queryParams.value.stopTime = dateRange.value[1]
+
+    getPlcList(queryParams.value);
+
     queryPlcLog(queryParams.value).then(response => {
         lineYList.value = response.data;
+
+        for (var i = 0; i < lineYList.value.length; i++) {
+            dataLine.push({ name: lineYList.value[i].time, value: [lineYList.value[i].time, lineYList.value[i].tagValue] });
+        }
         total.value = response.total;
         loading.value = false;
     });
@@ -275,4 +168,14 @@ function resetQuery() {
     proxy.resetForm("queryRef");
     handleQuery();
 }
+
+
+onMounted(async () => {
+    setTimeout(() => {  
+        getList();
+        echartLineDemo() ;
+        echartLinePlc();
+    }, 1000)
+  })
+
 </script>
