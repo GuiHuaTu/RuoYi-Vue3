@@ -1,4 +1,4 @@
-import { createApp } from 'vue'
+import { createApp ,inject  } from 'vue'
 
 import Cookies from 'js-cookie'
 
@@ -75,7 +75,8 @@ import DictTag from '@/components/DictTag'
 
 const app = createApp(App)
 
-// 全局方法挂载
+// 全局方法挂载 
+app.config.globalProperties.inject = inject
 app.config.globalProperties.useDict = useDict
 app.config.globalProperties.download = download
 app.config.globalProperties.parseTime = parseTime
@@ -106,6 +107,123 @@ app.component('svg-icon', SvgIcon)
 
 directive(app)
 
+const shortcuts = [
+  {
+      text: '1 min ',
+      value: () => {
+          const end = new Date()
+          const start = new Date()
+          start.setTime(start.getTime() - 3600 * 1000 * 1/60 * 1)
+          return [start, end]
+      },
+  },
+  {
+      text: '5 min ',
+      value: () => {
+          const end = new Date()
+          const start = new Date()
+          start.setTime(start.getTime() - 3600 * 1000 * 1/12 * 1)
+          return [start, end]
+      },
+  },
+  {
+      text: '15 min ',
+      value: () => {
+          const end = new Date()
+          const start = new Date()
+          start.setTime(start.getTime() - 3600 * 1000 * 1/4 * 1)
+          return [start, end]
+      },
+  },
+  {
+      text: '1 h ',
+      value: () => {
+          const end = new Date()
+          const start = new Date()
+          start.setTime(start.getTime() - 3600 * 1000 * 1 * 1)
+          return [start, end]
+      },
+  },
+  {
+      text: '3 h ',
+      value: () => {
+          const end = new Date()
+          const start = new Date()
+          start.setTime(start.getTime() - 3600 * 1000 * 3 * 1)
+          return [start, end]
+      },
+  },
+  {
+      text: '6 h ',
+      value: () => {
+          const end = new Date()
+          const start = new Date()
+          start.setTime(start.getTime() - 3600 * 1000 * 6 * 1)
+          return [start, end]
+      },
+  },
+  {
+      text: '12 h ',
+      value: () => {
+          const end = new Date()
+          const start = new Date()
+          start.setTime(start.getTime() - 3600 * 1000 * 12 * 1)
+          return [start, end]
+      },
+  },
+  {
+      text: '24 h ',
+      value: () => {
+          const end = new Date()
+          const start = new Date()
+          start.setTime(start.getTime() - 3600 * 1000 * 24 * 1)
+          return [start, end]
+      },
+  },
+  {
+      text: '3 day ',
+      value: () => {
+          const end = new Date()
+          const start = new Date()
+          start.setTime(start.getTime() - 3600 * 1000 * 24 * 3)
+          return [start, end]
+      },
+  },
+  {
+      text: 'Last week',
+      value: () => {
+          const end = new Date()
+          const start = new Date()
+          start.setTime(start.getTime() - 3600 * 1000 * 24 * 7)
+          return [start, end]
+      },
+  },
+  {
+      text: 'Last month',
+      value: () => {
+          const end = new Date()
+          const start = new Date()
+          start.setTime(start.getTime() - 3600 * 1000 * 24 * 30)
+          return [start, end]
+      },
+  },
+  {
+      text: 'Last 3 months',
+      value: () => {
+          const end = new Date()
+          const start = new Date()
+          start.setTime(start.getTime() - 3600 * 1000 * 24 * 90)
+          return [start, end]
+      },
+  }
+];
+
+// 使用 provide 将全局变量作为响应式对象
+app.provide('shortcuts', shortcuts); //便于在js部分可直接用
+
+// 使用 globalProperties 将全局变量附加到 Vue 实例上
+app.config.globalProperties.$shortcuts = shortcuts;  //便于在模板部分可直接用
+ 
 // 使用element-plus 并且设置全局的大小
 app.use(ElementPlus, {
   locale: locale,
