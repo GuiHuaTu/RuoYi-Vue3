@@ -8,6 +8,7 @@ export default {
     options: Object,
   },
   render() {
+    
     return Plot.plot({
       ...this.options,
       document: new Document(),
