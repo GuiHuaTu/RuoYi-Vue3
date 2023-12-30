@@ -71,7 +71,18 @@
                     </div>
                 </el-collapse-item>
                 <el-collapse-item title="Table" name="2">
-                    <div id="mainLine">
+                    <div>
+                        <el-card class="box-card">
+                            <template #header>
+                                <div class="card-header">
+                                    <span>Card name</span>
+                                    <el-button class="button" text>Operation button</el-button>
+                                </div>
+                            </template>
+                            <div v-for="o in 4" :key="o" class="text item">{{ 'List item ' + o }}</div>
+                            <template #footer>Footer content</template>
+                        </el-card>
+
                     </div>
                 </el-collapse-item>
             </el-collapse>
@@ -80,32 +91,24 @@
     </div>
 </template>
 
-
-<style scoped>
-/* 样式这里要设置长宽，不然显示不出来 */
-#mainBarDemo {
-    width: 600px;
-    height: 400px;
+<style>
+.input-with-select .el-input-group__prepend {
+    background-color: var(--el-fill-color-blank);
 }
+</style>
 
-/* 样式这里要设置长宽，不然显示不出来 */
-#mainLine {
-    width: 1200px;
-    height: 400px;
-}
-</style >
-
-
-<script setup name="plcData">
-import * as echarts from 'echarts'; 
+<script setup>
 import * as Plot from "@observablehq/plot";
 import PlotFigure from "./js/PlotFigure.js";
-import echartLinePlc from "./js/echartLinePlc.js";
-import { getList as getPlcList} from "./js/echartLinePlc.js";
+// import penguins from "./penguins.json";//从json文件加载数据
+import { parseTime, getDate,getTime,getDateTime} from '@/utils/tool'
 
-import { parseTime, getDate, getTime, getDateTime } from '@/utils/tool'
+import { queryPlcLog, queryByFluxQuery } from "@/api/influxDb/influx";
+import { ref, inject } from "vue";
 
-import { queryByFluxQuery } from "@/api/influxDb/influx";
+const { proxy } = getCurrentInstance();
+const { sys_window_period_unit } = proxy.useDict("sys_window_period_unit");
+const { sys_aggregate_function } = proxy.useDict("sys_aggregate_function");
 
 const lineYList = ref([]);
 const open = ref(false);
@@ -116,14 +119,7 @@ const single = ref(true);
 const multiple = ref(true);
 const total = ref(0);
 const title = ref("");
-// const dateRange = ref < [Date, Date] > ([
-//     new Date(2000, 10, 10, 10, 10),
-//     new Date(2000, 10, 11, 10, 10),
-// ]);
 
-const { proxy } = getCurrentInstance(); 
-const { sys_window_period_unit } = proxy.useDict("sys_window_period_unit");
-const { sys_aggregate_function } = proxy.useDict("sys_aggregate_function");
 const dateRange = ref('');
 const shortcuts = inject('shortcuts');
 
@@ -184,12 +180,12 @@ const data = reactive({
     },
 });
 
-const { queryParams, form, fluxQuery,rules } = toRefs(data);
+const { queryParams, form, fluxQuery, rules } = toRefs(data);
 
 const activeNames = ref(['1', '2'])
 
 
-/** 查询列表 */
+/** 查询角色列表 */
 function getList() {
     loading.value = true;
 
@@ -244,12 +240,4 @@ function resetQuery() {
     proxy.resetForm("queryRef");
     handleQuery();
 }
-
-onMounted(async () => {
-    setTimeout(() => {   
-        echartLinePlc();
-        
-    }, 1000)
-  })
-
 </script>

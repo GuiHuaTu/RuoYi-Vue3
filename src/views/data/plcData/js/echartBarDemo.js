@@ -3,7 +3,7 @@ import * as echarts from 'echarts';
 
 
 const aa = () => {
-  var dom = document.getElementById('main');
+  var dom = document.getElementById('mainBarDemo');
   var myChart = echarts.init(dom);
   window.addEventListener('resize', function () {//自适应大小
     myChart.resize(600, 400);
@@ -26,8 +26,8 @@ const aa = () => {
       }
     ]
   });
-
-  var chartDomLine = document.getElementById('mainLine');
+ 
+var chartDomLine = document.getElementById('mainLine');
   var myChartLine = echarts.init(chartDomLine);
   var option;
 

@@ -2,8 +2,9 @@
 import * as echarts from 'echarts';
 
 
+/*** 折线动态图 */
 const aa = () => { 
-var chartDom = document.getElementById('main');
+var chartDom = document.getElementById('mainLineDemo');
 var myChart = echarts.init(chartDom);
 var option;
 

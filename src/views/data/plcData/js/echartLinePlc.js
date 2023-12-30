@@ -5,18 +5,21 @@ var dataLine = [];
 
 /** 查询列表 */
 function getList(queryParamsValue) {
-    if(queryParamsValue){
-        queryPlcLog(queryParamsValue).then(response => { 
-            for (var i = 0; i < response.data.length; i++) {
-                dataLine.push({ name: response.data[i].time, value: [response.data[i].time, response.data[i].tagValue] });
-            } 
+    if (queryParamsValue) {
+        queryPlcLog(queryParamsValue).then(response => {
+            if (response && response.data) {
+                for (var i = 0; i < response.data.length; i++) {
+                    dataLine.push({ name: response.data[i].time, value: [response.data[i].time, response.data[i].tagValue] });
+                }
+
+            }
         });
 
     }
 }
 
-const aa = () => { 
-     
+const aa = () => {
+
 
     /*** 折线动态图 */
     var chartDomLine = document.getElementById('mainLine');
@@ -33,12 +36,12 @@ const aa = () => {
                 Math.round(value)
             ]
         };
-    } 
+    }
     let now = new Date(1997, 9, 3);
     let oneDay = 24 * 3600 * 1000;
-    let value = Math.random() * 1000; 
+    let value = Math.random() * 1000;
 
- 
+
     option = {
         title: {
             text: 'Dynamic Data & Time Axis'
@@ -87,7 +90,7 @@ const aa = () => {
     setInterval(function () {
         for (var i = 0; i < 10; i++) {
             dataLine.shift();
-            getList() ; 
+            getList();
         }
         myChartLine.setOption({
             series: [
