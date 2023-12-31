@@ -19,12 +19,21 @@
                 <el-button icon="Refresh" @click="resetQuery">重置</el-button>
             </el-form-item>
             <el-row>
-                <el-form-item label="起止时间" prop="dateRange" :rules="rules.dateRange" style="width: 440px">
-                    <el-date-picker  ref="datePick" v-model="queryParams.dateRange" value-format="YYYY-MM-DD HH:mm:ss" type="datetimerange"
-                        range-separator="-" :shortcuts="shortcuts" start-placeholder="开始日期"
-                        end-placeholder="结束日期" ></el-date-picker>
+
+                <el-form-item label="时间范围" prop="dateRange" :rules="rules.dateRange">
+                    <el-select v-model="queryParams.dateRange" placeholder="时间范围" clearable style="width: 100px"
+                        @change="dateRangeChange">
+                        <el-option v-for="dict in sys_plottimer_range" :key="dict.value" :label="dict.label"
+                            :value="dict.value" />
+                    </el-select>
                 </el-form-item>
 
+                <el-form-item label="起止时间" prop="customDateRange" v-show="startEndShow" :rules="rules.customDateRange"
+                    style="width: 440px">
+                    <el-date-picker v-model="queryParams.customDateRange" value-format="YYYY-MM-DD HH:mm:ss"
+                        type="datetimerange" range-separator="-" :shortcuts="shortcuts" start-placeholder="开始日期"
+                        end-placeholder="结束日期"></el-date-picker>
+                </el-form-item>
                 <el-form-item label="聚合时间" prop="period" :rules="rules.period">
                     <el-input v-model.number="queryParams.period" placeholder="" style="width: 120px">
                         <!-- <template #prepend>
@@ -79,6 +88,8 @@
             </el-collapse>
 
         </div>
+
+
     </div>
 </template>
 
@@ -96,6 +107,8 @@ import { ref, inject } from "vue";
 const { proxy } = getCurrentInstance();
 const { sys_window_period_unit } = proxy.useDict("sys_window_period_unit");
 const { sys_aggregate_function } = proxy.useDict("sys_aggregate_function");
+const { sys_plottimer_range } = proxy.useDict("sys_plottimer_range");
+
 
 const lineYList = ref([]);
 const open = ref(false);
@@ -106,13 +119,14 @@ const single = ref(true);
 const multiple = ref(true);
 const total = ref(0);
 const title = ref("");
+const startEndShow = ref(false);
 
 
 const shortcuts = inject('shortcuts');
 const dateRangeValidate = inject('dateRangeValidate');
 const isNullValidate = inject('dateRangeValidate');
 const numberValidate = inject('dateRangeValidate');
- 
+
 const data = reactive({
     form: {},
     fluxQuery: {
@@ -121,7 +135,8 @@ const data = reactive({
     queryParams: {
         pageNum: 1,
         pageSize: 10,
-        dateRange:'',
+        dateRange: '',
+        customDateRange: '',
         plcCode: 'S1500',
         tagCode: 'Tag_1',
         field: 'tag_value',
@@ -142,7 +157,8 @@ const data = reactive({
         ],
         periodUnit: [{ required: true, message: "不能为空", trigger: "blur" }],
         aggregateFun: [{ required: true, message: "不能为空", validator: isNullValidate, trigger: "blur" }],
-        dateRange: [{ required: true, message: "请选择起止时间", validator: dateRangeValidate, trigger: "blur" }],
+        dateRange: [{ required: true, message: "不能为空", trigger: "blur" }],
+        customDateRange: [{ required: true, message: "请选择起止时间", validator: dateRangeValidate, trigger: "blur" }],
     },
 });
 
@@ -155,8 +171,10 @@ const activeNames = ref(['1', '2'])
 function getList() {
     loading.value = true;
 
-    queryParams.value.startTime = queryParams.value.dateRange[0]
-    queryParams.value.stopTime = queryParams.value.dateRange[1]
+    if (queryParams.value.dateRange == 'customRange') {
+        queryParams.value.startTime = queryParams.value.customDateRange[0]
+        queryParams.value.stopTime = queryParams.value.customDateRange[1]
+    }
     // queryPlcLog(queryParams.value).then(response => {
     //     lineYList.value = response.data;
     //     total.value = response.total;
@@ -165,8 +183,6 @@ function getList() {
 
     var bucketName = ref('scada');   //数据库名
     var measurement = ref('plc_log');  //表名
-    var startTime = ref(queryParams.value.dateRange[0]);    //开始时间
-    var endTime = ref(queryParams.value.dateRange[1]);      //结束时间
     var plc_code = ref(queryParams.value.plcCode);     //plc设备名
     var tag_code = ref(queryParams.value.tagCode);     //点位名
     var period = ref(queryParams.value.period);          //X轴时间间隔
@@ -174,10 +190,22 @@ function getList() {
     var createEmpty = ref(false);  //是否填充缺失值 true false
     var aggregateFun = ref(queryParams.value.aggregateFun);    //aggregate Function 聚合方法
     var yieldName = aggregateFun;
-    var start = ref(parseTime(startTime.value, '{y}-{m}-{d}T{h}:{i}:{s}Z'));
-    var stop = ref(parseTime(endTime.value, '{y}-{m}-{d}T{h}:{i}:{s}Z'));
+    var start = ref('')
+    var stop = ref('')
+    var range = ref('')
+    if (queryParams.value.dateRange == 'customRange') {
+        var startTime = ref(queryParams.value.customDateRange[0]);    //开始时间
+        var endTime = ref(queryParams.value.customDateRange[1]);      //结束时间
+        start.value = parseTime(startTime.value, '{y}-{m}-{d}T{h}:{i}:{s}Z');
+        stop.value = parseTime(endTime.value, '{y}-{m}-{d}T{h}:{i}:{s}Z');
+        range.value = `|> range(start: time(v: \"${start.value}\"), stop: time(v: \"${stop.value}\"))`;
+    }
+    else {
+        start.value = queryParams.value.dateRange;
+        range.value = `|> range(start: ${start.value})`;
+    }
     fluxQuery.value.query = `from(bucket: \"${bucketName.value}\")` +
-        `|> range(start: time(v: \"${start.value}\"), stop: time(v: \"${stop.value}\"))` +
+        range.value +
         `|> filter(fn: (r) => r[\"_measurement\"] == \"${measurement.value}\")` +
         `|> filter(fn: (r) => r[\"plc_code\"] == \"${plc_code.value}\")` +
         `|> filter(fn: (r) => r[\"tag_code\"] == \"${tag_code.value}\")` +
@@ -193,10 +221,20 @@ function getList() {
 }
 /** 搜索按钮操作 */
 function handleQuery() {
+
+    if (queryParams.value.dateRange == 'customRange') {
+        rules.value['customDateRange'][0].required = true;
+    } else {
+        rules.value['customDateRange'][0].required = false;
+    }
+
     proxy.$refs["queryRef"].validate(valid => {
         if (valid) {
             queryParams.value.pageNum = 1;
             getList();
+        }
+        else {
+            proxy.$modal.msgError("查询表单校验错误!");
         }
     });
 }
@@ -206,4 +244,15 @@ function resetQuery() {
     proxy.resetForm("queryRef");
     handleQuery();
 }
+
+
+function dateRangeChange(value) {
+    if (value == 'customRange') {
+        startEndShow.value = true;
+    } else {
+        startEndShow.value = false;
+    }
+}
+
+
 </script>
