@@ -19,8 +19,8 @@
                 <el-button icon="Refresh" @click="resetQuery">重置</el-button>
             </el-form-item>
             <el-row>
-                <el-form-item label="起止时间" prop="dateRange" :rules="rules.dateRange" style="width: 420px">
-                    <el-date-picker v-model="dateRange" value-format="YYYY-MM-DD HH:mm:ss" type="datetimerange"
+                <el-form-item label="起止时间" prop="dateRange" :rules="rules.dateRange" style="width: 440px">
+                    <el-date-picker v-model="queryParams.dateRange" value-format="YYYY-MM-DD HH:mm:ss" type="datetimerange"
                         range-separator="-" :shortcuts="shortcuts" start-placeholder="开始日期"
                         end-placeholder="结束日期"></el-date-picker>
                 </el-form-item>
@@ -97,6 +97,7 @@
 
 
 <script setup name="plcData">
+import { ref, inject } from "vue";
 import * as echarts from 'echarts'; 
 import * as Plot from "@observablehq/plot";
 import PlotFigure from "./js/PlotFigure.js";
@@ -125,34 +126,11 @@ const { proxy } = getCurrentInstance();
 const { sys_window_period_unit } = proxy.useDict("sys_window_period_unit");
 const { sys_aggregate_function } = proxy.useDict("sys_aggregate_function");
 const dateRange = ref('');
-const shortcuts = inject('shortcuts');
-
-var isNullValidate = (rule, value, callback) => {
-    if (rule.required) {
-        if (value === '' || value === null || value === undefined) {
-            callback(new Error(rule.message));
-        }
-        else {
-            callback()
-        }
-    } else {
-        callback();
-    }
-
-};
-var dateRangeValidate = (rule, value, callback) => {
-    if (rule.required) {
-        if (!dateRange || dateRange.value.length == 0) {
-            callback(new Error(rule.message));
-        }
-        else {
-            callback()
-        }
-    } else {
-        callback();
-    }
-
-};
+const shortcuts = inject('shortcuts'); 
+const dateRangeValidate = inject('dateRangeValidate');
+const isNullValidate = inject('dateRangeValidate');
+const numberValidate = inject('dateRangeValidate');
+ 
 const data = reactive({
     form: {},
     fluxQuery: {

@@ -19,8 +19,8 @@
                 <el-button icon="Refresh" @click="resetQuery">重置</el-button>
             </el-form-item>
             <el-row>
-                <el-form-item label="起止时间" prop="dateRange" :rules="rules.dateRange" style="width: 420px">
-                    <el-date-picker v-model="dateRange" value-format="YYYY-MM-DD HH:mm:ss" type="datetimerange"
+                <el-form-item label="起止时间" prop="dateRange" :rules="rules.dateRange" style="width: 440px">
+                    <el-date-picker v-model="queryParams.dateRange" value-format="YYYY-MM-DD HH:mm:ss" type="datetimerange"
                         range-separator="-" :shortcuts="shortcuts" start-placeholder="开始日期"
                         end-placeholder="结束日期"></el-date-picker>
                 </el-form-item>
@@ -67,6 +67,7 @@
 
 
 <script setup name="plcData"> 
+import { ref, inject } from "vue";
 
 import echartLineDemo from "./js/echartLineDemo.js";
 import echartLinePlc from "./js/echartLinePlc.js";
@@ -88,6 +89,10 @@ const { proxy } = getCurrentInstance();
 const dateRange = ref('');
 
 const shortcuts = inject('shortcuts');
+const dateRangeValidate = inject('dateRangeValidate');
+const isNullValidate = inject('dateRangeValidate');
+const numberValidate = inject('dateRangeValidate');
+ 
 
 const data = reactive({
     form: {},

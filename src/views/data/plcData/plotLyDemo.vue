@@ -19,8 +19,8 @@
                 <el-button icon="Refresh" @click="resetQuery">重置</el-button>
             </el-form-item>
             <el-row>
-                <el-form-item label="起止时间" prop="dateRange" :rules="rules.dateRange" style="width: 420px">
-                    <el-date-picker v-model="dateRange" value-format="YYYY-MM-DD HH:mm:ss" type="datetimerange"
+                <el-form-item label="起止时间" prop="dateRange" :rules="rules.dateRange" style="width: 440px">
+                    <el-date-picker v-model="queryParams.dateRange" value-format="YYYY-MM-DD HH:mm:ss" type="datetimerange"
                         range-separator="-" :shortcuts="shortcuts" start-placeholder="开始日期"
                         end-placeholder="结束日期"></el-date-picker>
                 </el-form-item>
@@ -122,33 +122,11 @@ const title = ref("");
 
 const dateRange = ref('');
 const shortcuts = inject('shortcuts');
-
-var isNullValidate = (rule, value, callback) => {
-    if (rule.required) {
-        if (value === '' || value === null || value === undefined) {
-            callback(new Error(rule.message));
-        }
-        else {
-            callback()
-        }
-    } else {
-        callback();
-    }
-
-};
-var dateRangeValidate = (rule, value, callback) => {
-    if (rule.required) {
-        if (!dateRange || dateRange.value.length == 0) {
-            callback(new Error(rule.message));
-        }
-        else {
-            callback()
-        }
-    } else {
-        callback();
-    }
-
-};
+const dateRangeValidate = inject('dateRangeValidate');
+const isNullValidate = inject('dateRangeValidate');
+const numberValidate = inject('dateRangeValidate');
+ 
+ 
 const data = reactive({
     form: {},
     fluxQuery: {

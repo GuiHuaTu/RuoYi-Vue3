@@ -218,12 +218,70 @@ const shortcuts = [
   }
 ];
 
+
+const isNullValidate = (rule, value, callback) => {
+    if (rule.required) {
+        if (value === '' || value === null || value === undefined) {
+            callback(new Error(rule.message));
+        }
+        else {
+            callback()
+        }
+    } else {
+        callback();
+    }
+};
+const dateRangeValidate = (rule, value, callback) => {
+    if (rule.required) {
+        if (!value || value.length == 0) {
+            callback(new Error(rule.message));
+        }
+        else {
+            callback()
+        }
+    } else {
+        callback();
+    }
+};
+
+const numberValidate = (rule, value, callback) => {
+    if (rule.required) {
+        if (value === '') {
+            callback(new Error(rule.message));
+        }
+        else {
+            if (value <= 0) {
+                callback(new Error('输入的数量应大于0'));
+            }
+            callback()
+        }
+    } else {
+        callback();
+    }
+};
+
 // 使用 provide 将全局变量作为响应式对象
 app.provide('shortcuts', shortcuts); //便于在js部分可直接用
-
 // 使用 globalProperties 将全局变量附加到 Vue 实例上
-app.config.globalProperties.$shortcuts = shortcuts;  //便于在模板部分可直接用
+app.config.globalProperties.$shortcuts = shortcuts;  //便于在模板部分可直接用{{$shortcuts}} .
+// import { ref, inject } from "vue";后使用 inject(shortcuts) 使用变量
  
+// 使用 provide 将全局变量作为响应式对象
+app.provide('numberValidate', numberValidate); //便于在js部分可直接用
+// 使用 globalProperties 将全局变量附加到 Vue 实例上
+app.config.globalProperties.$numberValidate = numberValidate;  //便于在模板部分可直接用{{$numberValidate}}
+
+// 使用 provide 将全局变量作为响应式对象
+app.provide('dateRangeValidate', dateRangeValidate); //便于在js部分可直接用
+// 使用 globalProperties 将全局变量附加到 Vue 实例上
+app.config.globalProperties.$dateRangeValidate = dateRangeValidate;  //便于在模板部分可直接用{{$numberValidate}}
+
+// 使用 provide 将全局变量作为响应式对象
+app.provide('isNullValidate', isNullValidate); //便于在js部分可直接用
+// 使用 globalProperties 将全局变量附加到 Vue 实例上
+app.config.globalProperties.$isNullValidate = isNullValidate;  //便于在模板部分可直接用{{$numberValidate}}
+
+
 // 使用element-plus 并且设置全局的大小
 app.use(ElementPlus, {
   locale: locale,
