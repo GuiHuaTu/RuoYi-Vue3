@@ -39,7 +39,7 @@
                     <el-tooltip :content="'Switch value: ' + queryParams.aggregateQuery" placement="top">
                         <el-switch v-model="queryParams.aggregateQuery"
                             style="--el-switch-on-color: #13ce66; --el-switch-off-color: #ff4949" inline-prompt
-                            active-text="是" inactive-text="否"  @change="aggregateQueryChange"/>
+                            active-text="是" inactive-text="否" @change="aggregateQueryChange" />
                     </el-tooltip>
                 </el-form-item>
                 <div v-if="queryParams.aggregateQuery">
@@ -78,6 +78,41 @@
                 <el-collapse-item title="Table" name="2">
                     <div>
 
+                        <el-table :data="lineYList" @selection-change="handleSelectionChange">
+                            <!-- <el-table-column type="selection" width="55" align="center" /> -->
+                            <el-table-column label="设备代码" align="center" prop="plcCode" />
+                            <el-table-column label="点位代码" align="center" prop="tagCode" :show-overflow-tooltip="true" />
+                            <el-table-column label="点位值" align="center" prop="_value" :show-overflow-tooltip="true" />
+
+                            <el-table-column label="采集时间" align="center" prop="_time" width="200">
+                                <template #default="scope">
+                                    <span>{{ scope.row._time }}</span>
+                                </template>
+                            </el-table-column>
+                            <el-table-column label="起始时间" align="center" prop="_start" width="200">
+                                <template #default="scope">
+                                    <span>{{ scope.row._start }}</span>
+                                </template>
+                            </el-table-column>
+                            <el-table-column label="结束时间" align="center" prop="_stop" width="200">
+                                <template #default="scope">
+                                    <span>{{ scope.row._stop }}</span>
+                                </template>
+                            </el-table-column>
+                            <!-- <el-table-column label="操作" align="center" width="160" class-name="small-padding fixed-width">
+                                <template #default="scope">
+                                <el-button link type="primary" icon="Edit" @click="handleUpdate(scope.row)"
+                                    v-hasPermi="['system:dict:edit']">修改</el-button>
+                                <el-button link type="primary" icon="Delete" @click="handleDelete(scope.row)"
+                                    v-hasPermi="['system:dict:remove']">删除</el-button>
+                                </template>
+                            </el-table-column> 
+                            -->
+                        </el-table>
+
+
+                        <pagination v-show="total > 0" :total="total" v-model:page="queryParams.pageNum"
+                            v-model:limit="queryParams.pageSize" @pagination="getList" />
 
                     </div>
                 </el-collapse-item>
@@ -349,7 +384,7 @@ function dateRangeChange(value) {
         startEndShow.value = false;
     }
 }
-function aggregateQueryChange(value) { 
+function aggregateQueryChange(value) {
     if (value) {
         // aggregateQueryShow.value = true;
     } else {
@@ -358,10 +393,10 @@ function aggregateQueryChange(value) {
 }
 const state = reactive({
     timeInter: null,//定义定时器
-    timeFun:null,
+    timeFun: null,
 })
 /** 延时查询 */
-function delayHandleQuery(){ 
+function delayHandleQuery() {
     handleQuery();
     state.timeFun = setTimeout(() => {
         delayHandleQuery();
@@ -391,4 +426,10 @@ onUnmounted(() => {
     }
 })
 
+/** 多选框选中数据 */
+function handleSelectionChange(selection) {
+    ids.value = selection.map(item => item.dictId);
+    single.value = selection.length != 1;
+    multiple.value = !selection.length;
+}
 </script>

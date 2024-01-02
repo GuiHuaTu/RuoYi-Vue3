@@ -70,7 +70,7 @@
         <div class="demo-collapse">
             <el-collapse v-model="activeNames">
                 <el-collapse-item name="1">
-                    <template #title>MarkerLine<el-icon class="header-icon">
+                    <template #title>PlotLyMarkerLine<el-icon class="header-icon">
                             <info-filled />
                         </el-icon>
                     </template>
@@ -93,7 +93,7 @@
                     <div id="plotLyId"></div>
 
                 </el-collapse-item>
-                <el-collapse-item title="Table" name="2">
+                <el-collapse-item title="EchartMarkerLine" name="2">
                     <div id="mainLine">
                     </div>
                 </el-collapse-item>
