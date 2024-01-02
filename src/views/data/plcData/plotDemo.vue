@@ -34,25 +34,35 @@
                         type="datetimerange" range-separator="-" :shortcuts="shortcuts" start-placeholder="开始日期"
                         end-placeholder="结束日期"></el-date-picker>
                 </el-form-item>
-                <el-form-item label="聚合时间" prop="period" :rules="rules.period">
-                    <el-input v-model.number="queryParams.period" placeholder="" style="width: 120px">
-                        <!-- <template #prepend>
+                <el-form-item label="是否聚合" prop="aggregateQuery" :rules="rules.aggregateQuery">
+                    <el-tooltip :content="'Switch value: ' + queryParams.aggregateQuery" placement="top">
+                        <el-switch v-model="queryParams.aggregateQuery"
+                            style="--el-switch-on-color: #13ce66; --el-switch-off-color: #ff4949" inline-prompt
+                            active-text="是" inactive-text="否"  @change="aggregateQueryChange"/>
+                    </el-tooltip>
+                </el-form-item>
+                <div v-if="queryParams.aggregateQuery">
+                    <el-form-item label="聚合时间" prop="period" :rules="rules.period">
+                        <el-input v-model.number="queryParams.period" placeholder="" style="width: 120px">
+                            <!-- <template #prepend>
                             <el-button :icon="Search" />
                         </template> -->
-                        <template #append>
-                            <el-select v-model="queryParams.periodUnit" clearable>
-                                <el-option v-for="dict in sys_window_period_unit" :key="dict.value" :label="dict.label"
-                                    :value="dict.value" />
-                            </el-select>
-                        </template>
-                    </el-input>
-                </el-form-item>
-                <el-form-item label="聚合方法" prop="aggregateFun" :rules="rules.aggregateFun">
-                    <el-select v-model="queryParams.aggregateFun" placeholder="聚合方法" clearable style="width: 100px">
-                        <el-option v-for="dict in sys_aggregate_function" :key="dict.value" :label="dict.label"
-                            :value="dict.value" />
-                    </el-select>
-                </el-form-item>
+                            <template #append>
+                                <el-select v-model="queryParams.periodUnit" clearable>
+                                    <el-option v-for="dict in sys_window_period_unit" :key="dict.value" :label="dict.label"
+                                        :value="dict.value" />
+                                </el-select>
+                            </template>
+                        </el-input>
+                    </el-form-item>
+                    <el-form-item label="聚合方法" prop="aggregateFun" :rules="rules.aggregateFun">
+                        <el-select v-model="queryParams.aggregateFun" placeholder="聚合方法" clearable style="width: 100px">
+                            <el-option v-for="dict in sys_aggregate_function" :key="dict.value" :label="dict.label"
+                                :value="dict.value" />
+                        </el-select>
+                    </el-form-item>
+                </div>
+     
             </el-row>
         </el-form>
 
@@ -138,6 +148,7 @@ const data = reactive({
         plcCode: 'S1500',
         tagCode: 'Tag_1',
         field: 'tag_value',
+        aggregateQuery: false,
         aggregateFun: 'last',
         periodUnit: 's',
         period: 5,
@@ -150,6 +161,7 @@ const data = reactive({
         plcCode: [{ required: true, message: "不能为空", trigger: "blur" }],
         tagCode: [{ required: true, message: "不能为空", trigger: "blur" }],
         field: [{ required: true, message: "不能为空", trigger: "blur" }],
+        aggregateQuery: [{ required: true, message: "不能为空", trigger: "blur" }],
         period: [
             { required: true, message: "不能为空", trigger: "blur" },
             { type: 'number', required: true, message: "请输入数字！", trigger: "blur" },
@@ -196,6 +208,7 @@ function getList() {
     var yieldName = aggregateFun;
     var start = ref('')
     var stop = ref('')
+
     var range = ref('')
     if (queryParams.value.dateRange == 'customRange') {
         var startTime = ref(queryParams.value.customDateRange[0]);    //开始时间
@@ -208,13 +221,21 @@ function getList() {
         start.value = queryParams.value.dateRange;
         range.value = `|> range(start: ${start.value})`;
     }
+    
+    var aggregate = ref('');
+    if (queryParams.value.aggregateQuery) {
+        aggregate.value = `|> aggregateWindow(every: ${period.value}${periodUnit.value}, fn: ${aggregateFun.value}, createEmpty: ${createEmpty.value})`+
+         `|> yield(name: \"${yieldName.value}\")`;
+    } else {
+        aggregate.value = '';
+    }
+
     fluxQuery.value.query = `from(bucket: \"${bucketName.value}\")` +
         range.value +
         `|> filter(fn: (r) => r[\"_measurement\"] == \"${measurement.value}\")` +
         `|> filter(fn: (r) => r[\"plc_code\"] == \"${plc_code.value}\")` +
         `|> filter(fn: (r) => r[\"tag_code\"] == \"${tag_code.value}\")` +
-        `|> aggregateWindow(every: ${period.value}${periodUnit.value}, fn: ${aggregateFun.value}, createEmpty: ${createEmpty.value})` +
-        `|> yield(name: \"${yieldName.value}\")`;
+        aggregate.value ; 
 
     queryByFluxQuery(fluxQuery.value).then(response => {
         if (response.code == 200) {
@@ -233,6 +254,12 @@ function handleQuery() {
         rules.value['customDateRange'][0].required = true;
     } else {
         rules.value['customDateRange'][0].required = false;
+    }
+
+    if (queryParams.value.aggregateQuery) {
+        rules.value['aggregateQuery'][0].required = true;
+    } else {
+        rules.value['aggregateQuery'][0].required = false;
     }
 
     proxy.$refs["queryRef"].validate(valid => {

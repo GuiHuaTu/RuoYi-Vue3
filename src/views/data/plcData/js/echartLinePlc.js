@@ -10,7 +10,7 @@ function getList(queryParamsValue) {
             if (response.code == 200) {
                 if (response && response.data) {
                     for (var i = 0; i < response.data.length; i++) {
-                        dataLine.push({ name: response.data[i].time, value: [response.data[i].time, response.data[i].tagValue] });
+                        dataLine.push({ name: response.data[i]._time, value: [response.data[i]._time, response.data[i]._value] });
                     }
                 }
             } else {
