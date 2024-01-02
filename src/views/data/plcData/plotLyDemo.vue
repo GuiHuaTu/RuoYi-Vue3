@@ -97,6 +97,7 @@ import { queryPlcLog, queryByFluxQuery } from "@/api/influxDb/influx";
 import { ref, inject } from "vue";
 import PlotLyLine from "./components/plotLyLine";
 import Plotly from 'plotly.js/dist/plotly';
+// import Plotly from '@/utils/plotly'
 
 const { proxy } = getCurrentInstance();
 const { sys_window_period_unit } = proxy.useDict("sys_window_period_unit");
@@ -126,6 +127,7 @@ const data = reactive({
     fluxQuery: {
         query: undefined,
     },
+    timedTasksCollector: null,
     queryParams: {
         pageNum: 1,
         pageSize: 10,
@@ -157,7 +159,7 @@ const data = reactive({
 
 });
 
-const { queryParams, form, fluxQuery, rules, } = toRefs(data);
+const { queryParams, form, fluxQuery, rules, timedTasksCollector, } = toRefs(data);
 
 const activeNames = ref(['1', '2'])
 
@@ -180,15 +182,26 @@ const dataPlotLy = ref([{
 }])
 const layoutPlotLy = ref({
     title: 'Line and Scatter Plot',
+    xaxis: {
+        title: '采集时间'
+    },
+    yaxis: {
+        title: '点值'
+    },
+})
+const configPlotLy = ref({
+    displayModeBar: false,//不显示右上角的按钮
+    // scrollZoom: true,
+    displaylogo: false
 })
 
 const redrawDataValue = function (dataValue) {
     let ctx = document.getElementById('plotLyId');
-    Plotly.react(ctx, dataValue, layoutPlotLy.value);
+    Plotly.react(ctx, dataValue, layoutPlotLy.value, configPlotLy.value);
 }
 const redrawLayoutValue = function (layoutValue) {
     let ctx = document.getElementById('plotLyId');
-    Plotly.react(ctx, dataPlotLy.value, layoutValue);
+    Plotly.react(ctx, dataPlotLy.value, layoutValue, configPlotLy.value);
 }
 
 
@@ -275,7 +288,7 @@ function PlotlyShow() {
         dataPlotLy.value[0].y = y;
 
         let ctx = document.getElementById('plotLyId');
-        Plotly.react(ctx, dataPlotLy.value, layoutPlotLy.value);
+        Plotly.react(ctx, dataPlotLy.value, layoutPlotLy.value, configPlotLy.value);
     }
 
 }
@@ -315,11 +328,27 @@ function dateRangeChange(value) {
     }
 }
 
+const state = reactive({
+    timeInter: null,//定义定时器
+})
+//组件挂载的过程
 onMounted(async () => {
-    setTimeout(() => {
+    //     setTimeout(() => {
+    //         handleQuery();
+    //     }, 1000)
+
+    /// 定时采集数据显示
+    state.timeInter = setInterval(() => {
         handleQuery();
-    }, 1000)
+    }, 10000);
 })
 
+//组件卸载时的生命周期
+onUnmounted(() => {
+    if (state.timeInter) {
+        clearInterval(state.timeInter) //销毁
+        state.timeInter = null
+    }
+})
 
 </script>

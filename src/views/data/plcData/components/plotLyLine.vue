@@ -2,8 +2,9 @@
     <div style="width:auto;margin:auto;height: 300px;" id="plotLyId"></div>
 </template>
     
-<script setup>
+<script setup> 
 import Plotly from 'plotly.js/dist/plotly';
+// import Plotly from '@/utils/plotly'
 
 const props = defineProps({
 
