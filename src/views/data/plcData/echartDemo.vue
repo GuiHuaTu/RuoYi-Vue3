@@ -72,7 +72,7 @@
         <div class="demo-collapse">
             <el-collapse v-model="activeNames">
                 <el-collapse-item name="1">
-                    <template #title>Chart<el-icon class="header-icon">
+                    <template #title>MarkerLine<el-icon class="header-icon">
                             <info-filled />
                         </el-icon>
                     </template>
@@ -110,7 +110,7 @@ import { ref, inject } from "vue";
 
 import echartLineDemo from "./js/echartLineDemo.js";
 import echartLinePlc from "./js/echartLinePlc.js";
-import { getList as getPlcList } from "./js/echartLinePlc.js";
+import { getList as getEchartPlcList } from "./js/echartLinePlc.js";
 import { queryPlcLog } from "@/api/influxDb/influx";
 
 
@@ -200,7 +200,7 @@ function getList() {
         aggregate.value = '';
     }
 
-    getPlcList(queryParams.value);
+    getEchartPlcList(queryParams.value);
 
 }
 /** 搜索按钮操作 */

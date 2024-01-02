@@ -69,7 +69,7 @@
         <div class="demo-collapse">
             <el-collapse v-model="activeNames">
                 <el-collapse-item name="1">
-                    <template #title>Chart<el-icon class="header-icon">
+                    <template #title>MarkerLine<el-icon class="header-icon">
                             <info-filled />
                         </el-icon>
                     </template>
@@ -82,10 +82,7 @@
                     </div>
                 </el-collapse-item>
             </el-collapse>
-
         </div>
-
-
     </div>
 </template>
 
@@ -198,23 +195,23 @@ const layoutPlotLy = ref({
     },
 })
 const configPlotLy = ref({
-    displayModeBar: false,//不显示右上角的按钮
+    // displayModeBar: false,//不显示右上角的按钮
     // scrollZoom: true,
-    displaylogo: false
+    displaylogo: false //不显示plotly的logo
 })
 
-const redrawDataValue = function (dataValue) {
-    let ctx = document.getElementById('plotLyId');
-    Plotly.react(ctx, dataValue, layoutPlotLy.value, configPlotLy.value);
-}
-const redrawLayoutValue = function (layoutValue) {
-    let ctx = document.getElementById('plotLyId');
-    Plotly.react(ctx, dataPlotLy.value, layoutValue, configPlotLy.value);
-}
+// const redrawDataValue = function (dataValue) {
+// let ctx = document.getElementById('plotLyId');
+// Plotly.react(ctx, dataValue, layoutPlotLy.value, configPlotLy.value);
+// }
+// const redrawLayoutValue = function (layoutValue) {
+// let ctx = document.getElementById('plotLyId');
+// Plotly.react(ctx, dataPlotLy.value, layoutValue, configPlotLy.value);
+// }
 
 
-watch(() => dataPlotLy, value => redrawDataValue(value))
-watch(() => layoutPlotLy, value => redrawLayoutValue(value))
+// watch(() => dataPlotLy, value => redrawDataValue(value))
+// watch(() => layoutPlotLy, value => redrawLayoutValue(value))
 
 
 
@@ -342,7 +339,6 @@ function resetQuery() {
     handleQuery();
 }
 
-
 const timeFlush = reactive({
     rangeFlush: 15000,//定义定时器间隔时间 默认是15s
 })
@@ -362,17 +358,26 @@ function aggregateQueryChange(value) {
 }
 const state = reactive({
     timeInter: null,//定义定时器
+    timeFun:null,
 })
+/** 延时查询 */
+function delayHandleQuery(){ 
+    handleQuery();
+    state.timeFun = setTimeout(() => {
+        delayHandleQuery();
+    }, 1000)
+}
+
 //组件挂载的过程
 onMounted(async () => {
     setTimeout(() => {
-        handleQuery();
+        delayHandleQuery();
     }, 1000)
 
     console.log(timeFlush.rangeFlush)
     /// 定时采集数据显示
     state.timeInter = setInterval(() => {
-        handleQuery();
+        delayHandleQuery();
     }, timeFlush.rangeFlush);
 })
 
@@ -380,7 +385,9 @@ onMounted(async () => {
 onUnmounted(() => {
     if (state.timeInter) {
         clearInterval(state.timeInter) //销毁
+        clearInterval(state.timeFun) //销毁
         state.timeInter = null
+        state.timeFun = null
     }
 })
 

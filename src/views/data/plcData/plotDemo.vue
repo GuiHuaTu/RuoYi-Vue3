@@ -21,7 +21,7 @@
             <el-row>
 
                 <el-form-item label="时间范围" prop="dateRange" :rules="rules.dateRange">
-                    <el-select v-model="queryParams.dateRange" placeholder="时间范围" clearable style="width: 100px"
+                    <el-select v-model="queryParams.dateRange" placeholder="时间范围" clearable style="width: 150px"
                         @change="dateRangeChange">
                         <el-option v-for="dict in sys_plottimer_range" :key="dict.value" :label="dict.label"
                             :value="dict.value" />
@@ -38,7 +38,7 @@
                     <el-tooltip :content="'Switch value: ' + queryParams.aggregateQuery" placement="top">
                         <el-switch v-model="queryParams.aggregateQuery"
                             style="--el-switch-on-color: #13ce66; --el-switch-off-color: #ff4949" inline-prompt
-                            active-text="是" inactive-text="否"  @change="aggregateQueryChange"/>
+                            active-text="是" inactive-text="否" @change="aggregateQueryChange" />
                     </el-tooltip>
                 </el-form-item>
                 <div v-if="queryParams.aggregateQuery">
@@ -62,29 +62,31 @@
                         </el-select>
                     </el-form-item>
                 </div>
-     
+
             </el-row>
         </el-form>
 
         <div class="demo-collapse">
             <el-collapse v-model="activeNames">
                 <el-collapse-item name="1">
-                    <template #title>Chart<el-icon class="header-icon">
+                    <template #title>MarkerLine<el-icon class="header-icon">
                             <info-filled />
                         </el-icon>
                     </template>
                     <div>
                         <PlotFigure :options="{
+                            width: 1200,
                             x: {
                                 label: '时间'
                             },
                             y: {
                                 label: '点位值',
-                                grid: true
+                                // grid: true
                             },
                             marks: [
-                                // Plot.ruleY([0]),
-                                Plot.lineY(lineYList, { x: '_time', y: '_value' }),
+                                Plot.ruleY([0]),
+                                Plot.lineY(plotData, { x: '_time', y: '_value', marker: true }),
+                                Plot.tip(plotData, {x: '_time', y: '_value'}),
                             ],
                         }" />
                     </div>
@@ -111,8 +113,9 @@ import PlotFigure from "./js/PlotFigure.js";
 // import penguins from "./penguins.json";//从json文件加载数据
 import { parseTime, getDate, getTime, getDateTime } from '@/utils/tool'
 
-import { queryByFluxQuery } from "@/api/influxDb/influx";
+import {queryPlcLog, queryByFluxQuery } from "@/api/influxDb/influx";
 import { ref, inject } from "vue";
+import { f } from "plotly.js/dist/plotly";
 
 const { proxy } = getCurrentInstance();
 const { sys_window_period_unit } = proxy.useDict("sys_window_period_unit");
@@ -121,6 +124,7 @@ const { sys_plottimer_range } = proxy.useDict("sys_plottimer_range");
 
 
 const lineYList = ref([]);
+const plotData = ref([]);
 const open = ref(false);
 const loading = ref(true);
 const showSearch = ref(true);
@@ -187,65 +191,76 @@ function getList() {
         queryParams.value.startTime = queryParams.value.customDateRange[0]
         queryParams.value.stopTime = queryParams.value.customDateRange[1]
     }
-    // queryPlcLog(queryParams.value).then(response => {
-    // if (response.code == 200) {
-    //     lineYList.value = response.data;
-    //     total.value = response.total;
-    //     loading.value = false;
-    // } else {
-    //     proxy.$modal.msgError(response.msg);
-    // } 
-    // });
+    queryPlcLog(queryParams.value).then(response => {
+    if (response.code == 200) {
+        lineYList.value = response.data;
+        total.value = response.total;
+        loading.value = false;
 
-    var bucketName = ref('scada');   //数据库名
-    var measurement = ref('plc_log');  //表名
-    var plc_code = ref(queryParams.value.plcCode);     //plc设备名
-    var tag_code = ref(queryParams.value.tagCode);     //点位名
-    var period = ref(queryParams.value.period);          //X轴时间间隔
-    var periodUnit = ref(queryParams.value.periodUnit);    //间隔时间单位 s m h d 
-    var createEmpty = ref(false);  //是否填充缺失值 true false
-    var aggregateFun = ref(queryParams.value.aggregateFun);    //aggregate Function 聚合方法
-    var yieldName = aggregateFun;
-    var start = ref('')
-    var stop = ref('')
+        
+        lineYList.value.forEach((item) => {
+            // x.push(item._time);
+            // y.push(item._value);
+            plotData.value.push({
+                _time:new Date(item._time),
+                _value:item._value,
+            }); 
+        });
 
-    var range = ref('')
-    if (queryParams.value.dateRange == 'customRange') {
-        var startTime = ref(queryParams.value.customDateRange[0]);    //开始时间
-        var endTime = ref(queryParams.value.customDateRange[1]);      //结束时间
-        start.value = parseTime(startTime.value, '{y}-{m}-{d}T{h}:{i}:{s}Z');
-        stop.value = parseTime(endTime.value, '{y}-{m}-{d}T{h}:{i}:{s}Z');
-        range.value = `|> range(start: time(v: \"${start.value}\"), stop: time(v: \"${stop.value}\"))`;
-    }
-    else {
-        start.value = queryParams.value.dateRange;
-        range.value = `|> range(start: ${start.value})`;
-    }
-    
-    var aggregate = ref('');
-    if (queryParams.value.aggregateQuery) {
-        aggregate.value = `|> aggregateWindow(every: ${period.value}${periodUnit.value}, fn: ${aggregateFun.value}, createEmpty: ${createEmpty.value})`+
-         `|> yield(name: \"${yieldName.value}\")`;
     } else {
-        aggregate.value = '';
-    }
-
-    fluxQuery.value.query = `from(bucket: \"${bucketName.value}\")` +
-        range.value +
-        `|> filter(fn: (r) => r[\"_measurement\"] == \"${measurement.value}\")` +
-        `|> filter(fn: (r) => r[\"plc_code\"] == \"${plc_code.value}\")` +
-        `|> filter(fn: (r) => r[\"tag_code\"] == \"${tag_code.value}\")` +
-        aggregate.value ; 
-
-    queryByFluxQuery(fluxQuery.value).then(response => {
-        if (response.code == 200) {
-            lineYList.value = response.data;
-            total.value = response.total;
-            loading.value = false;
-        } else {
-            proxy.$modal.msgError(response.msg);
-        }
+        proxy.$modal.msgError(response.msg);
+    } 
     });
+
+    // var bucketName = ref('scada');   //数据库名
+    // var measurement = ref('plc_log');  //表名
+    // var plc_code = ref(queryParams.value.plcCode);     //plc设备名
+    // var tag_code = ref(queryParams.value.tagCode);     //点位名
+    // var period = ref(queryParams.value.period);          //X轴时间间隔
+    // var periodUnit = ref(queryParams.value.periodUnit);    //间隔时间单位 s m h d 
+    // var createEmpty = ref(false);  //是否填充缺失值 true false
+    // var aggregateFun = ref(queryParams.value.aggregateFun);    //aggregate Function 聚合方法
+    // var yieldName = aggregateFun;
+    // var start = ref('')
+    // var stop = ref('')
+
+    // var range = ref('')
+    // if (queryParams.value.dateRange == 'customRange') {
+    //     var startTime = ref(queryParams.value.customDateRange[0]);    //开始时间
+    //     var endTime = ref(queryParams.value.customDateRange[1]);      //结束时间
+    //     start.value = parseTime(startTime.value, '{y}-{m}-{d}T{h}:{i}:{s}Z');
+    //     stop.value = parseTime(endTime.value, '{y}-{m}-{d}T{h}:{i}:{s}Z');
+    //     range.value = `|> range(start: time(v: \"${start.value}\"), stop: time(v: \"${stop.value}\"))`;
+    // }
+    // else {
+    //     start.value = queryParams.value.dateRange;
+    //     range.value = `|> range(start: ${start.value})`;
+    // }
+
+    // var aggregate = ref('');
+    // if (queryParams.value.aggregateQuery) {
+    //     aggregate.value = `|> aggregateWindow(every: ${period.value}${periodUnit.value}, fn: ${aggregateFun.value}, createEmpty: ${createEmpty.value})` +
+    //         `|> yield(name: \"${yieldName.value}\")`;
+    // } else {
+    //     aggregate.value = '';
+    // }
+
+    // fluxQuery.value.query = `from(bucket: \"${bucketName.value}\")` +
+    //     range.value +
+    //     `|> filter(fn: (r) => r[\"_measurement\"] == \"${measurement.value}\")` +
+    //     `|> filter(fn: (r) => r[\"plc_code\"] == \"${plc_code.value}\")` +
+    //     `|> filter(fn: (r) => r[\"tag_code\"] == \"${tag_code.value}\")` +
+    //     aggregate.value;
+
+    // queryByFluxQuery(fluxQuery.value).then(response => {
+    //     if (response.code == 200) {
+    //         lineYList.value = response.data;
+    //         total.value = response.total;
+    //         loading.value = false;
+    //     } else {
+    //         proxy.$modal.msgError(response.msg);
+    //     }
+    // });
 }
 /** 搜索按钮操作 */
 function handleQuery() {
@@ -287,7 +302,13 @@ function dateRangeChange(value) {
         startEndShow.value = false;
     }
 }
-
+function aggregateQueryChange(value) { 
+    if (value) {
+        // aggregateQueryShow.value = true;
+    } else {
+        // aggregateQueryShow.value = false;
+    }
+}
 
 onMounted(async () => {
     setTimeout(() => {

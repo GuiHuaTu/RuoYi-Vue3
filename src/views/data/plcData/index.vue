@@ -21,7 +21,7 @@
             <el-row>
 
                 <el-form-item label="时间范围" prop="dateRange" :rules="rules.dateRange">
-                    <el-select v-model="queryParams.dateRange" placeholder="时间范围" clearable style="width: 100px"
+                    <el-select v-model="queryParams.dateRange" placeholder="时间范围" clearable style="width: 150px"
                         @change="dateRangeChange">
                         <el-option v-for="dict in sys_plottimer_range" :key="dict.value" :label="dict.label"
                             :value="dict.value" />
@@ -70,11 +70,11 @@
         <div class="demo-collapse">
             <el-collapse v-model="activeNames">
                 <el-collapse-item name="1">
-                    <template #title>Chart<el-icon class="header-icon">
+                    <template #title>MarkerLine<el-icon class="header-icon">
                             <info-filled />
                         </el-icon>
                     </template>
-                    <div>
+                    <!-- <div>
                         <PlotFigure :options="{
                             x: {
                                 label: '时间'
@@ -88,7 +88,10 @@
                                 Plot.lineY(lineYList, { x: '_time', y: '_value' }),
                             ],
                         }" />
-                    </div>
+                    </div> -->
+
+                    <div id="plotLyId"></div>
+
                 </el-collapse-item>
                 <el-collapse-item title="Table" name="2">
                     <div id="mainLine">
@@ -121,8 +124,10 @@ import { ref, inject } from "vue";
 import * as echarts from 'echarts';
 import * as Plot from "@observablehq/plot";
 import PlotFigure from "./js/PlotFigure.js";
+import Plotly from 'plotly.js/dist/plotly';
+// import Plotly from '@/utils/plotly'
 import echartLinePlc from "./js/echartLinePlc.js";
-import { getList as getPlcList } from "./js/echartLinePlc.js";
+import { getList as getEchartPlcList } from "./js/echartLinePlc.js";
 
 import { parseTime, getDate, getTime, getDateTime } from '@/utils/tool'
 
@@ -192,6 +197,45 @@ const { queryParams, form, fluxQuery, rules } = toRefs(data);
 const activeNames = ref(['1', '2'])
 
 
+const dataPlotLy = ref([{
+    x: [],
+    y: [],
+    mode: 'lines+markers',
+    line: { color: 'blue' },
+    marker: {
+        color: 'red',
+        // size: 12
+    },
+}])
+const layoutPlotLy = ref({
+    title: 'PLC采集数据',
+    xaxis: {
+        title: '采集时间'
+    },
+    yaxis: {
+        title: '点值'
+    },
+})
+const configPlotLy = ref({
+    // displayModeBar: false,//不显示右上角的按钮
+    // scrollZoom: true,
+    displaylogo: false //不显示plotly的logo
+})
+
+// const redrawDataValue = function (dataValue) {
+// let ctx = document.getElementById('plotLyId');
+// Plotly.react(ctx, dataValue, layoutPlotLy.value, configPlotLy.value);
+// }
+// const redrawLayoutValue = function (layoutValue) {
+// let ctx = document.getElementById('plotLyId');
+// Plotly.react(ctx, dataPlotLy.value, layoutValue, configPlotLy.value);
+// }
+
+
+// watch(() => dataPlotLy, value => redrawDataValue(value))
+// watch(() => layoutPlotLy, value => redrawLayoutValue(value))
+
+
 /** 查询列表 */
 function getList() {
     loading.value = true;
@@ -205,10 +249,13 @@ function getList() {
     //     lineYList.value = response.data;
     //     total.value = response.total;
     //     loading.value = false;
+    //     PlotlyShow();
     // } else {
     //     proxy.$modal.msgError(response.msg);
     // }
     // });
+
+    getEchartPlcList(queryParams.value);
 
     var bucketName = ref('scada');   //数据库名
     var measurement = ref('plc_log');  //表名
@@ -254,11 +301,32 @@ function getList() {
             lineYList.value = response.data;
             total.value = response.total;
             loading.value = false;
+            PlotlyShow();
         } else {
             proxy.$modal.msgError(response.msg);
         }
     });
 }
+function PlotlyShow() {
+    console.log('-----------------')
+    if (lineYList.value && lineYList.value.length > 0) {
+        var x = [];
+        var y = [];
+        lineYList.value.forEach((item) => {
+            // x.push(item._time);
+            // y.push(item._value);
+            x.push(item._time);
+            y.push(item._value);
+        });
+        dataPlotLy.value[0].x = x;
+        dataPlotLy.value[0].y = y;
+
+        let ctx = document.getElementById('plotLyId');
+        Plotly.react(ctx, dataPlotLy.value, layoutPlotLy.value, configPlotLy.value);
+    }
+
+}
+
 /** 搜索按钮操作 */
 function handleQuery() {
 
@@ -292,6 +360,10 @@ function resetQuery() {
 }
 
 
+
+const timeFlush = reactive({
+    rangeFlush: 15000,//定义定时器间隔时间 默认是15s
+})
 function dateRangeChange(value) {
     if (value == 'customRange') {
         startEndShow.value = true;
@@ -299,13 +371,35 @@ function dateRangeChange(value) {
         startEndShow.value = false;
     }
 }
-
-
+function aggregateQueryChange(value) { 
+    if (value) {
+        // aggregateQueryShow.value = true;
+    } else {
+        // aggregateQueryShow.value = false;
+    }
+}
+const state = reactive({
+    timeInter: null,//定义定时器
+})
+//组件挂载的过程
 onMounted(async () => {
     setTimeout(() => {
         echartLinePlc();
-
+        handleQuery();
     }, 1000)
+
+    console.log(timeFlush.rangeFlush)
+    /// 定时采集数据显示
+    state.timeInter = setInterval(() => {
+        handleQuery();
+    }, timeFlush.rangeFlush);
 })
 
+//组件卸载时的生命周期
+onUnmounted(() => {
+    if (state.timeInter) {
+        clearInterval(state.timeInter) //销毁
+        state.timeInter = null
+    }
+})
 </script>

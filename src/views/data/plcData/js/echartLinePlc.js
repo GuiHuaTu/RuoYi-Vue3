@@ -28,12 +28,6 @@ const aa = () => {
     var chartDomLine = document.getElementById('mainLine');
     var myChartLine = echarts.init(chartDomLine);
     var option;
-
-    let now = new Date(1997, 9, 3);
-    let oneDay = 24 * 3600 * 1000;
-    let value = Math.random() * 1000;
-
-
     option = {
         title: {
             text: 'Dynamic Data & Time Axis'
