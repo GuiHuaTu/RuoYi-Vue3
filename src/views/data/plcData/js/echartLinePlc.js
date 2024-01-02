@@ -7,11 +7,14 @@ var dataLine = [];
 function getList(queryParamsValue) {
     if (queryParamsValue) {
         queryPlcLog(queryParamsValue).then(response => {
-            if (response && response.data) {
-                for (var i = 0; i < response.data.length; i++) {
-                    dataLine.push({ name: response.data[i].time, value: [response.data[i].time, response.data[i].tagValue] });
+            if (response.code == 200) {
+                if (response && response.data) {
+                    for (var i = 0; i < response.data.length; i++) {
+                        dataLine.push({ name: response.data[i].time, value: [response.data[i].time, response.data[i].tagValue] });
+                    }
                 }
-
+            } else {
+                proxy.$modal.msgError(response.msg);
             }
         });
 

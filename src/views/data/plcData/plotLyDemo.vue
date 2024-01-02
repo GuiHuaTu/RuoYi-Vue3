@@ -3,15 +3,15 @@
     <div class="app-container">
         <el-form :model="queryParams" ref="queryRef" v-show="showSearch" :inline="true" label-width="80px">
             <el-form-item label="PLC代码" prop="plcCode" :rules="rules.plcCode">
-                <el-input v-model="queryParams.plcCode" placeholder="请输入PLC代码" clearable style="width: 125px"
+                <el-input v-model="queryParams.plcCode" placeholder="请输入PLC代码" clearable style="width: 150px"
                     @keyup.enter="handleQuery" />
             </el-form-item>
             <el-form-item label="Tag代码" prop="tagCode" :rules="rules.tagCode">
-                <el-input v-model="queryParams.tagCode" placeholder="请输入Tag代码" clearable style="width: 125px"
+                <el-input v-model="queryParams.tagCode" placeholder="请输入Tag代码" clearable style="width: 150px"
                     @keyup.enter="handleQuery" />
             </el-form-item>
             <el-form-item label="检索名" prop="field" :rules="rules.field">
-                <el-input v-model="queryParams.field" placeholder="请输入检索名" clearable style="width: 125px"
+                <el-input v-model="queryParams.field" placeholder="请输入检索名" clearable style="width: 150px"
                     @keyup.enter="handleQuery" />
             </el-form-item>
             <el-form-item>
@@ -21,7 +21,7 @@
             <el-row>
 
                 <el-form-item label="时间范围" prop="dateRange" :rules="rules.dateRange">
-                    <el-select v-model="queryParams.dateRange" placeholder="时间范围" clearable style="width: 100px"
+                    <el-select v-model="queryParams.dateRange" placeholder="时间范围" clearable style="width: 150px"
                         @change="dateRangeChange">
                         <el-option v-for="dict in sys_plottimer_range" :key="dict.value" :label="dict.label"
                             :value="dict.value" />
@@ -72,7 +72,7 @@
     title: 'Line and Scatter Plot'
 }" />
                     </div> -->
-                    <div  id="plotLyId"></div>
+                    <div id="plotLyId"></div>
                 </el-collapse-item>
                 <el-collapse-item title="Table" name="2">
                     <div>
@@ -93,7 +93,7 @@
 <script setup>
 import { parseTime, getDate, getTime, getDateTime } from '@/utils/tool'
 
-import { queryByFluxQuery } from "@/api/influxDb/influx";
+import { queryPlcLog, queryByFluxQuery } from "@/api/influxDb/influx";
 import { ref, inject } from "vue";
 import PlotLyLine from "./components/plotLyLine";
 import Plotly from 'plotly.js/dist/plotly';
@@ -129,14 +129,14 @@ const data = reactive({
     queryParams: {
         pageNum: 1,
         pageSize: 10,
-        dateRange: '',
-        customDateRange: '',
         plcCode: 'S1500',
         tagCode: 'Tag_1',
         field: 'tag_value',
         aggregateFun: 'last',
         periodUnit: 's',
         period: 5,
+        dateRange: '-1m',
+        customDateRange: '',
         startTime: '',
         stopTime: '',
     },
@@ -154,18 +154,10 @@ const data = reactive({
         dateRange: [{ required: true, message: "不能为空", trigger: "blur" }],
         customDateRange: [{ required: true, message: "请选择起止时间", validator: dateRangeValidate, trigger: "blur" }],
     },
-    dataPlotLy: [{
-        x: [],
-        y: [],
-        mode: 'lines+markers'
-    }
-    ],
-    layoutPlotLy: {
-        title: 'Line and Scatter Plot',
-    },
+
 });
 
-const { queryParams, form, fluxQuery, rules, dataPlotLy, layoutPlotLy, } = toRefs(data);
+const { queryParams, form, fluxQuery, rules, } = toRefs(data);
 
 const activeNames = ref(['1', '2'])
 
@@ -181,6 +173,14 @@ const activeNames = ref(['1', '2'])
 // })
 
 
+const dataPlotLy = ref([{
+    x: [],
+    y: [],
+    mode: 'lines+markers'
+}])
+const layoutPlotLy = ref({
+    title: 'Line and Scatter Plot',
+})
 
 const redrawDataValue = function (dataValue) {
     let ctx = document.getElementById('plotLyId');
@@ -205,66 +205,81 @@ function getList() {
         queryParams.value.startTime = queryParams.value.customDateRange[0]
         queryParams.value.stopTime = queryParams.value.customDateRange[1]
     }
-    // queryPlcLog(queryParams.value).then(response => {
+    queryPlcLog(queryParams.value).then(response => {
+        if (response.code == 200) {
+            lineYList.value = response.data;
+            total.value = response.total;
+            loading.value = false;
+            PlotlyShow();
+        } else {
+            proxy.$modal.msgError(response.msg);
+        }
+    });
+
+    // var bucketName = ref('scada');   //数据库名
+    // var measurement = ref('plc_log');  //表名
+    // var plc_code = ref(queryParams.value.plcCode);     //plc设备名
+    // var tag_code = ref(queryParams.value.tagCode);     //点位名
+    // var period = ref(queryParams.value.period);          //X轴时间间隔
+    // var periodUnit = ref(queryParams.value.periodUnit);    //间隔时间单位 s m h d 
+    // var createEmpty = ref(false);  //是否填充缺失值 true false
+    // var aggregateFun = ref(queryParams.value.aggregateFun);    //aggregate Function 聚合方法
+    // var yieldName = aggregateFun;
+    // var start = ref('')
+    // var stop = ref('')
+    // var range = ref('')
+    // if (queryParams.value.dateRange == 'customRange') {
+    //     var startTime = ref(queryParams.value.customDateRange[0]);    //开始时间
+    //     var endTime = ref(queryParams.value.customDateRange[1]);      //结束时间
+    //     start.value = parseTime(startTime.value, '{y}-{m}-{d}T{h}:{i}:{s}Z');
+    //     stop.value = parseTime(endTime.value, '{y}-{m}-{d}T{h}:{i}:{s}Z');
+    //     range.value = `|> range(start: time(v: \"${start.value}\"), stop: time(v: \"${stop.value}\"))`;
+    // }
+    // else {
+    //     start.value = queryParams.value.dateRange;
+    //     range.value = `|> range(start: ${start.value})`;
+    // }
+    // fluxQuery.value.query = `from(bucket: \"${bucketName.value}\")` +
+    //     range.value +
+    //     `|> filter(fn: (r) => r[\"_measurement\"] == \"${measurement.value}\")` +
+    //     `|> filter(fn: (r) => r[\"plc_code\"] == \"${plc_code.value}\")` +
+    //     `|> filter(fn: (r) => r[\"tag_code\"] == \"${tag_code.value}\")` +
+    //     `|> aggregateWindow(every: ${period.value}${periodUnit.value}, fn: ${aggregateFun.value}, createEmpty: ${createEmpty.value})` +
+    //     `|> yield(name: \"${yieldName.value}\")`;
+
+    // queryByFluxQuery(fluxQuery.value).then(response => {
+    // if (response.code == 200) {
     //     lineYList.value = response.data;
     //     total.value = response.total;
     //     loading.value = false;
+    //     PlotlyShow();
+    // } else {
+    //     proxy.$modal.msgError(response.msg);
+    // } 
     // });
 
-    var bucketName = ref('scada');   //数据库名
-    var measurement = ref('plc_log');  //表名
-    var plc_code = ref(queryParams.value.plcCode);     //plc设备名
-    var tag_code = ref(queryParams.value.tagCode);     //点位名
-    var period = ref(queryParams.value.period);          //X轴时间间隔
-    var periodUnit = ref(queryParams.value.periodUnit);    //间隔时间单位 s m h d 
-    var createEmpty = ref(false);  //是否填充缺失值 true false
-    var aggregateFun = ref(queryParams.value.aggregateFun);    //aggregate Function 聚合方法
-    var yieldName = aggregateFun;
-    var start = ref('')
-    var stop = ref('')
-    var range = ref('')
-    if (queryParams.value.dateRange == 'customRange') {
-        var startTime = ref(queryParams.value.customDateRange[0]);    //开始时间
-        var endTime = ref(queryParams.value.customDateRange[1]);      //结束时间
-        start.value = parseTime(startTime.value, '{y}-{m}-{d}T{h}:{i}:{s}Z');
-        stop.value = parseTime(endTime.value, '{y}-{m}-{d}T{h}:{i}:{s}Z');
-        range.value = `|> range(start: time(v: \"${start.value}\"), stop: time(v: \"${stop.value}\"))`;
-    }
-    else {
-        start.value = queryParams.value.dateRange;
-        range.value = `|> range(start: ${start.value})`;
-    }
-    fluxQuery.value.query = `from(bucket: \"${bucketName.value}\")` +
-        range.value +
-        `|> filter(fn: (r) => r[\"_measurement\"] == \"${measurement.value}\")` +
-        `|> filter(fn: (r) => r[\"plc_code\"] == \"${plc_code.value}\")` +
-        `|> filter(fn: (r) => r[\"tag_code\"] == \"${tag_code.value}\")` +
-        `|> aggregateWindow(every: ${period.value}${periodUnit.value}, fn: ${aggregateFun.value}, createEmpty: ${createEmpty.value})` +
-        `|> yield(name: \"${yieldName.value}\")`;
+}
 
-    console.log(fluxQuery.value.query);
-    queryByFluxQuery(fluxQuery.value).then(response => {
-        lineYList.value = response.data;
-        total.value = response.total;
-        loading.value = false;
-    });
-
+function PlotlyShow() {
+    console.log('-----------------')
     if (lineYList.value && lineYList.value.length > 0) {
         var x = [];
         var y = [];
         lineYList.value.forEach((item) => {
-            x.push(item._time);
-            y.push(item._value);
+            // x.push(item._time);
+            // y.push(item._value);
+            x.push(item.time);
+            y.push(item.tagValue);
         });
-        dataPlotLy.value.x = x;
-        dataPlotLy.value.y = y;
+        dataPlotLy.value[0].x = x;
+        dataPlotLy.value[0].y = y;
 
-        console.log(dataPlotLy.value.x)
-        console.log(dataPlotLy.value.y )
         let ctx = document.getElementById('plotLyId');
-        Plotly.newPlot(ctx, dataPlotLy.value, layoutPlotLy.value);
+        Plotly.react(ctx, dataPlotLy.value, layoutPlotLy.value);
     }
+
 }
+
 /** 搜索按钮操作 */
 function handleQuery() {
 
@@ -299,6 +314,12 @@ function dateRangeChange(value) {
         startEndShow.value = false;
     }
 }
+
+onMounted(async () => {
+    setTimeout(() => {
+        handleQuery();
+    }, 1000)
+})
 
 
 </script>

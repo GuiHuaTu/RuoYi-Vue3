@@ -3,15 +3,15 @@
     <div class="app-container">
         <el-form :model="queryParams" ref="queryRef" v-show="showSearch" :inline="true" label-width="80px">
             <el-form-item label="PLC代码" prop="plcCode" :rules="rules.plcCode">
-                <el-input v-model="queryParams.plcCode" placeholder="请输入PLC代码" clearable style="width: 125px"
+                <el-input v-model="queryParams.plcCode" placeholder="请输入PLC代码" clearable style="width: 150px"
                     @keyup.enter="handleQuery" />
             </el-form-item>
             <el-form-item label="Tag代码" prop="tagCode" :rules="rules.tagCode">
-                <el-input v-model="queryParams.tagCode" placeholder="请输入Tag代码" clearable style="width: 125px"
+                <el-input v-model="queryParams.tagCode" placeholder="请输入Tag代码" clearable style="width: 150px"
                     @keyup.enter="handleQuery" />
             </el-form-item>
             <el-form-item label="检索名" prop="field" :rules="rules.field">
-                <el-input v-model="queryParams.field" placeholder="请输入检索名" clearable style="width: 125px"
+                <el-input v-model="queryParams.field" placeholder="请输入检索名" clearable style="width: 150px"
                     @keyup.enter="handleQuery" />
             </el-form-item>
             <el-form-item>
@@ -135,14 +135,14 @@ const data = reactive({
     queryParams: {
         pageNum: 1,
         pageSize: 10,
-        dateRange: '',
-        customDateRange: '',
         plcCode: 'S1500',
         tagCode: 'Tag_1',
         field: 'tag_value',
         aggregateFun: 'last',
         periodUnit: 's',
         period: 5,
+        dateRange: '-1m',
+        customDateRange: '',
         startTime: '',
         stopTime: '',
     },
@@ -176,9 +176,13 @@ function getList() {
         queryParams.value.stopTime = queryParams.value.customDateRange[1]
     }
     // queryPlcLog(queryParams.value).then(response => {
+    // if (response.code == 200) {
     //     lineYList.value = response.data;
     //     total.value = response.total;
     //     loading.value = false;
+    // } else {
+    //     proxy.$modal.msgError(response.msg);
+    // } 
     // });
 
     var bucketName = ref('scada');   //数据库名
@@ -212,11 +216,14 @@ function getList() {
         `|> aggregateWindow(every: ${period.value}${periodUnit.value}, fn: ${aggregateFun.value}, createEmpty: ${createEmpty.value})` +
         `|> yield(name: \"${yieldName.value}\")`;
 
-    console.log(fluxQuery.value.query);
     queryByFluxQuery(fluxQuery.value).then(response => {
-        lineYList.value = response.data;
-        total.value = response.total;
-        loading.value = false;
+        if (response.code == 200) {
+            lineYList.value = response.data;
+            total.value = response.total;
+            loading.value = false;
+        } else {
+            proxy.$modal.msgError(response.msg);
+        }
     });
 }
 /** 搜索按钮操作 */
@@ -254,5 +261,11 @@ function dateRangeChange(value) {
     }
 }
 
+
+onMounted(async () => {
+    setTimeout(() => {
+        handleQuery();
+    }, 1000)
+})
 
 </script>
