@@ -40,7 +40,7 @@
                     <el-tooltip :content="'Switch value: ' + queryParams.aggregateQuery" placement="top">
                         <el-switch v-model="queryParams.aggregateQuery"
                             style="--el-switch-on-color: #13ce66; --el-switch-off-color: #ff4949" inline-prompt
-                            active-text="是" inactive-text="否"  @change="aggregateQueryChange"/>
+                            active-text="是" inactive-text="否" @change="aggregateQueryChange" />
                     </el-tooltip>
                 </el-form-item>
                 <div v-if="queryParams.aggregateQuery">
@@ -64,7 +64,7 @@
                         </el-select>
                     </el-form-item>
                 </div>
-     
+
             </el-row>
         </el-form>
 
@@ -109,8 +109,8 @@
 import { ref, inject } from "vue";
 
 import echartLineDemo from "./js/echartLineDemo.js";
-import echartLinePlc from "./js/echartLinePlc.js";
-import { getList as getEchartPlcList } from "./js/echartLinePlc.js";
+import { useEchartLine } from "./js/echartLinePlc.js";
+
 import { queryPlcLog } from "@/api/influxDb/influx";
 
 
@@ -125,7 +125,7 @@ const total = ref(0);
 const title = ref("");
 const startEndShow = ref(false);
 
-const { proxy } = getCurrentInstance(); 
+const { proxy } = getCurrentInstance();
 const { sys_window_period_unit } = proxy.useDict("sys_window_period_unit");
 const { sys_aggregate_function } = proxy.useDict("sys_aggregate_function");
 const { sys_plottimer_range } = proxy.useDict("sys_plottimer_range");
@@ -134,7 +134,7 @@ const { sys_plottimer_range } = proxy.useDict("sys_plottimer_range");
 const shortcuts = inject('shortcuts');
 const dateRangeValidate = inject('dateRangeValidate');
 const isNullValidate = inject('dateRangeValidate');
-const numberValidate = inject('dateRangeValidate'); 
+const numberValidate = inject('dateRangeValidate');
 
 
 const data = reactive({
@@ -185,22 +185,26 @@ function getList() {
         queryParams.value.startTime = queryParams.value.customDateRange[0]
         queryParams.value.stopTime = queryParams.value.customDateRange[1]
     }
-    
-    if (queryParams.value.aggregateQuery) {
-        rules.value['aggregateQuery'][0].required = true;
-    } else {
-        rules.value['aggregateQuery'][0].required = false;
-    }
 
-    var aggregate = ref('');
-    if (queryParams.value.aggregateQuery) {
-        aggregate.value = `|> aggregateWindow(every: ${period.value}${periodUnit.value}, fn: ${aggregateFun.value}, createEmpty: ${createEmpty.value})`+
-         `|> yield(name: \"${yieldName.value}\")`;
-    } else {
-        aggregate.value = '';
-    }
+    var dataLine = [];
 
-    getEchartPlcList(queryParams.value);
+    queryPlcLog(queryParams.value).then(response => {
+        if (response.code == 200) {
+            lineYList.value = response.data;
+            total.value = response.total;
+            loading.value = false;
+
+            if (response && response.data) {
+                for (var i = 0; i < response.data.length; i++) {
+                    dataLine.push({ name: response.data[i]._time, value: [response.data[i]._time, response.data[i]._value] });
+                }
+            }
+
+            useEchartLine('mainLine',dataLine)
+        } else {
+            proxy.$modal.msgError(response.msg);
+        }
+    });
 
 }
 /** 搜索按钮操作 */
@@ -211,6 +215,12 @@ function handleQuery() {
     } else {
         rules.value['customDateRange'][0].required = false;
     }
+    if (queryParams.value.aggregateQuery) {
+        rules.value['aggregateQuery'][0].required = true;
+    } else {
+        rules.value['aggregateQuery'][0].required = false;
+    }
+
 
     proxy.$refs["queryRef"].validate(valid => {
         if (valid) {
@@ -229,6 +239,13 @@ function resetQuery() {
     handleQuery();
 }
 
+function aggregateQueryChange(value) {
+    if (value) {
+        // aggregateQueryShow.value = true;
+    } else {
+        // aggregateQueryShow.value = false;
+    }
+}
 function dateRangeChange(value) {
     if (value == 'customRange') {
         startEndShow.value = true;
@@ -241,9 +258,15 @@ function dateRangeChange(value) {
 onMounted(async () => {
     setTimeout(() => {
         handleQuery();
-        echartLineDemo();
-        echartLinePlc();
+        echartLineDemo(); 
     }, 1000)
 })
 
+setInterval(function () {
+    for (var i = 0; i < 10; i++) {
+        dataLine.shift();
+    }
+    handleQuery();
+
+}, 10000);
 </script>

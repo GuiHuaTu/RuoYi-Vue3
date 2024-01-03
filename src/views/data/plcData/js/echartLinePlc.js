@@ -1,31 +1,9 @@
 import * as echarts from 'echarts';
-import { queryPlcLog } from "@/api/influxDb/influx";
+import { ref, watchEffect, toValue } from 'vue'
 
-var dataLine = [];
-
-/** 查询列表 */
-function getList(queryParamsValue) {
-    if (queryParamsValue) {
-        queryPlcLog(queryParamsValue).then(response => {
-            if (response.code == 200) {
-                if (response && response.data) {
-                    for (var i = 0; i < response.data.length; i++) {
-                        dataLine.push({ name: response.data[i]._time, value: [response.data[i]._time, response.data[i]._value] });
-                    }
-                }
-            } else {
-                proxy.$modal.msgError(response.msg);
-            }
-        });
-
-    }
-}
-
-const aa = () => {
-
-
+export function createLine(elementId,dataLine) {
     /*** 折线动态图 */
-    var chartDomLine = document.getElementById('mainLine');
+    var chartDomLine = document.getElementById(elementId);
     var myChartLine = echarts.init(chartDomLine);
     var option;
     option = {
@@ -73,21 +51,17 @@ const aa = () => {
             }
         ]
     };
-    setInterval(function () {
-        for (var i = 0; i < 10; i++) {
-            dataLine.shift();
-        }
-        getList();
-        myChartLine.setOption({
-            series: [
-                {
-                    data: dataLine
-                }
-            ]
-        });
-    }, 10000);
-
     option && myChartLine.setOption(option);
 }
-export { dataLine, getList }
-export default aa
+
+export function useEchartLine(elementId,dataLine) {
+    const fetchData = () => {
+        createLine(toValue(elementId),toValue(dataLine))
+    }
+
+    watchEffect(() => {
+        fetchData()
+    })
+
+}
+
