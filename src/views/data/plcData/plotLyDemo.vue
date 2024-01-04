@@ -400,7 +400,7 @@ function delayHandleQuery() {
     handleQuery();
     state.timeFun = setTimeout(() => {
         delayHandleQuery();
-    }, 1000)
+    }, 100)
 }
 
 //组件挂载的过程
