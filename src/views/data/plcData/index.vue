@@ -39,7 +39,7 @@
                     <el-tooltip :content="'Switch value: ' + queryParams.aggregateQuery" placement="top">
                         <el-switch v-model="queryParams.aggregateQuery"
                             style="--el-switch-on-color: #13ce66; --el-switch-off-color: #ff4949" inline-prompt
-                            active-text="是" inactive-text="否"  @change="aggregateQueryChange"/>
+                            active-text="是" inactive-text="否" @change="aggregateQueryChange" />
                     </el-tooltip>
                 </el-form-item>
                 <div v-if="queryParams.aggregateQuery">
@@ -63,7 +63,7 @@
                         </el-select>
                     </el-form-item>
                 </div>
-     
+
             </el-row>
         </el-form>
 
@@ -126,8 +126,7 @@ import * as Plot from "@observablehq/plot";
 import PlotFigure from "./js/PlotFigure.js";
 import Plotly from 'plotly.js/dist/plotly';
 // import Plotly from '@/utils/plotly'
-import echartLinePlc from "./js/echartLinePlc.js";
-import { getList as getEchartPlcList } from "./js/echartLinePlc.js";
+import { useEchartLine } from "./js/echartLinePlc.js";
 
 import { parseTime, getDate, getTime, getDateTime } from '@/utils/tool'
 
@@ -255,7 +254,6 @@ function getList() {
     // }
     // });
 
-    getEchartPlcList(queryParams.value);
 
     var bucketName = ref('scada');   //数据库名
     var measurement = ref('plc_log');  //表名
@@ -280,11 +278,11 @@ function getList() {
         start.value = queryParams.value.dateRange;
         range.value = `|> range(start: ${start.value})`;
     }
-    
+
     var aggregate = ref('');
     if (queryParams.value.aggregateQuery) {
-        aggregate.value = `|> aggregateWindow(every: ${period.value}${periodUnit.value}, fn: ${aggregateFun.value}, createEmpty: ${createEmpty.value})`+
-         `|> yield(name: \"${yieldName.value}\")`;
+        aggregate.value = `|> aggregateWindow(every: ${period.value}${periodUnit.value}, fn: ${aggregateFun.value}, createEmpty: ${createEmpty.value})` +
+            `|> yield(name: \"${yieldName.value}\")`;
     } else {
         aggregate.value = '';
     }
@@ -294,7 +292,7 @@ function getList() {
         `|> filter(fn: (r) => r[\"_measurement\"] == \"${measurement.value}\")` +
         `|> filter(fn: (r) => r[\"plc_code\"] == \"${plc_code.value}\")` +
         `|> filter(fn: (r) => r[\"tag_code\"] == \"${tag_code.value}\")` +
-        aggregate.value ; 
+        aggregate.value;
 
     queryByFluxQuery(fluxQuery.value).then(response => {
         if (response.code == 200) {
@@ -323,6 +321,15 @@ function PlotlyShow() {
 
         let ctx = document.getElementById('plotLyId');
         Plotly.react(ctx, dataPlotLy.value, layoutPlotLy.value, configPlotLy.value);
+
+
+        var dataLine = [];
+        if (response && response.data) {
+            for (var i = 0; i < response.data.length; i++) {
+                dataLine.push({ name: response.data[i]._time, value: [response.data[i]._time, response.data[i]._value] });
+            }
+        }
+        useEchartLine('mainLine', dataLine)
     }
 
 }
@@ -371,7 +378,7 @@ function dateRangeChange(value) {
         startEndShow.value = false;
     }
 }
-function aggregateQueryChange(value) { 
+function aggregateQueryChange(value) {
     if (value) {
         // aggregateQueryShow.value = true;
     } else {
@@ -383,8 +390,7 @@ const state = reactive({
 })
 //组件挂载的过程
 onMounted(async () => {
-    setTimeout(() => {
-        echartLinePlc();
+    setTimeout(() => { 
         handleQuery();
     }, 1000)
 

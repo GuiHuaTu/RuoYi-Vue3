@@ -186,7 +186,6 @@ function getList() {
         queryParams.value.stopTime = queryParams.value.customDateRange[1]
     }
 
-    var dataLine = [];
 
     queryPlcLog(queryParams.value).then(response => {
         if (response.code == 200) {
@@ -194,12 +193,12 @@ function getList() {
             total.value = response.total;
             loading.value = false;
 
+            var dataLine = [];
             if (response && response.data) {
                 for (var i = 0; i < response.data.length; i++) {
                     dataLine.push({ name: response.data[i]._time, value: [response.data[i]._time, response.data[i]._value] });
                 }
             }
-
             useEchartLine('mainLine',dataLine)
         } else {
             proxy.$modal.msgError(response.msg);
