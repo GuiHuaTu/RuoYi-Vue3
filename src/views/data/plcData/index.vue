@@ -324,10 +324,9 @@ function PlotlyShow() {
 
 
         var dataLine = [];
-        if (response && response.data) {
-            for (var i = 0; i < response.data.length; i++) {
-                dataLine.push({ name: response.data[i]._time, value: [response.data[i]._time, response.data[i]._value] });
-            }
+
+        for (var i = 0; i < lineYList.value.length; i++) {
+            dataLine.push({ name: response.data[i]._time, value: [response.data[i]._time, response.data[i]._value] });
         }
         useEchartLine('mainLine', dataLine)
     }
@@ -390,7 +389,7 @@ const state = reactive({
 })
 //组件挂载的过程
 onMounted(async () => {
-    setTimeout(() => { 
+    setTimeout(() => {
         handleQuery();
     }, 1000)
 
