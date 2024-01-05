@@ -108,7 +108,7 @@
  </template>
  
  <script setup name="Tag"> 
- import { listTag, getTag, delTag, addTag, updateTag, refreshCache } from "@/api/tagManage/tag";
+ import { listTag, getTag, delTag, addTag, updateTag, refreshCache } from "@/api/plcManage/tag";
  
  const { proxy } = getCurrentInstance();
  const { sys_normal_disable } = proxy.useDict("sys_normal_disable");
