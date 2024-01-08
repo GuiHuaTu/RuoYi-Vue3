@@ -10,9 +10,9 @@ export function listPlc(query) {
 }
 
 // 查询详细
-export function getPlc(dictId) {
+export function getPlc(plcId) {
   return request({
-    url: '/plc/getPlc/' + dictId,
+    url: '/plc/getPlc/' + plcId,
     method: 'get'
   })
 }
@@ -36,9 +36,9 @@ export function updatePlc(data) {
 }
 
 // 删除
-export function delPlc(dictId) {
+export function delPlc(plcId) {
   return request({
-    url: '/plc/delPlc/' + dictId,
+    url: '/plc/delPlc/' + plcId,
     method: 'delete'
   })
 }

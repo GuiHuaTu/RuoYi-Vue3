@@ -5,8 +5,8 @@
              <el-input v-model="queryParams.tagName" placeholder="请输入TAG名称" clearable style="width: 240px"
                 @keyup.enter="handleQuery" />
           </el-form-item>
-          <el-form-item label="TAG类型" prop="tagType">
-             <el-input v-model="queryParams.tagType" placeholder="请输入TAG类型" clearable style="width: 240px"
+          <el-form-item label="TAG类型" prop="tagCode">
+             <el-input v-model="queryParams.tagCode" placeholder="请输入TAG类型" clearable style="width: 240px"
                 @keyup.enter="handleQuery" />
           </el-form-item>
           <el-form-item label="状态" prop="status">
@@ -84,8 +84,8 @@
              <el-form-item label="TAG名称" prop="tagName">
                 <el-input v-model="form.tagName" placeholder="请输入TAG名称" />
              </el-form-item>
-             <el-form-item label="TAG类型" prop="tagType">
-                <el-input v-model="form.tagType" placeholder="请输入TAG类型" />
+             <el-form-item label="TAG名称" prop="tagCode">
+                <el-input v-model="form.tagCode" placeholder="请输入TAG类型" />
              </el-form-item>
              <el-form-item label="状态" prop="status">
                 <el-radio-group v-model="form.status">
@@ -108,7 +108,7 @@
  </template>
  
  <script setup name="Tag"> 
- import { listTag, getTag, delTag, addTag, updateTag, refreshCache } from "@/api/plcManage/tag";
+ import { listTag, getTag, delTag, addTag, updateTag } from "@/api/plcManage/tag";
  
  const { proxy } = getCurrentInstance();
  const { sys_normal_disable } = proxy.useDict("sys_normal_disable");
@@ -130,12 +130,12 @@
        pageNum: 1,
        pageSize: 10,
        tagName: undefined,
-       tagType: undefined,
+       tagCode: undefined,
        status: undefined
     },
     rules: {
-       tagName: [{ required: true, message: "TAG名称不能为空", trigger: "blur" }],
-       tagType: [{ required: true, message: "TAG类型不能为空", trigger: "blur" }]
+       tagName: [{ required: true, message: "不能为空", trigger: "blur" }],
+       tagCode: [{ required: true, message: "不能为空", trigger: "blur" }]
     },
  });
  
@@ -160,7 +160,7 @@
     form.value = {
        tagId: undefined,
        tagName: undefined,
-       tagType: undefined,
+       tagCode: undefined,
        status: "0",
        remark: undefined
     };
@@ -181,7 +181,7 @@
  function handleAdd() {
     reset();
     open.value = true;
-    title.value = "添加TAG类型";
+    title.value = "添加点位";
  }
  /** 多选框选中数据 */
  function handleSelectionChange(selection) {
@@ -196,7 +196,7 @@
     getTag(tagId).then(response => {
        form.value = response.data;
        open.value = true;
-       title.value = "修改TAG类型";
+       title.value = "修改点位";
     });
  }
  /** 提交按钮 */
@@ -222,7 +222,7 @@
  /** 删除按钮操作 */
  function handleDelete(row) {
     const tagIds = row.tagId || ids.value;
-    proxy.$modal.confirm('是否确认删除TAG编号为"' + tagIds + '"的数据项？').then(function () {
+    proxy.$modal.confirm('是否确认删除点位编号为"' + tagIds + '"的数据项？').then(function () {
        return delTag(tagIds);
     }).then(() => {
        getList();

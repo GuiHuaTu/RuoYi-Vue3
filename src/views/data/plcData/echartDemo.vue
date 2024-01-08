@@ -133,8 +133,8 @@ const { sys_plottimer_range } = proxy.useDict("sys_plottimer_range");
 
 const shortcuts = inject('shortcuts');
 const dateRangeValidate = inject('dateRangeValidate');
-const isNullValidate = inject('dateRangeValidate');
-const numberValidate = inject('dateRangeValidate');
+const isNullValidate = inject('isNullValidate');
+const numberValidate = inject('numberValidate');
 
 
 const data = reactive({

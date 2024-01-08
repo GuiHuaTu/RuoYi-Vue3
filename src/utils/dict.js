@@ -22,3 +22,20 @@ export function useDict(...args) {
     return toRefs(res.value);
   })()
 }
+/**
+ * 动态实时获取字典数据
+ */
+export function useDictDynamics(...args) {
+  debugger
+  const res = ref({});
+  return (() => {
+    args.forEach((dictType, index) => {
+      res.value[dictType] = [];
+      getDicts(dictType).then(resp => {
+        res.value[dictType] = resp.data.map(p => ({ label: p.dictLabel, value: p.dictValue, elTagType: p.listClass, elTagClass: p.cssClass }))
+        useDictStore().setDict(dictType, res.value[dictType]);
+      })
+    })
+    return toRefs(res.value);
+  })()
+}

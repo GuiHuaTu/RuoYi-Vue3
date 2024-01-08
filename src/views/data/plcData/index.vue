@@ -151,8 +151,8 @@ const { sys_plottimer_range } = proxy.useDict("sys_plottimer_range");
 
 const shortcuts = inject('shortcuts');
 const dateRangeValidate = inject('dateRangeValidate');
-const isNullValidate = inject('dateRangeValidate');
-const numberValidate = inject('dateRangeValidate');
+const isNullValidate = inject('isNullValidate');
+const numberValidate = inject('numberValidate');
 
 const data = reactive({
     form: {},
@@ -180,7 +180,7 @@ const data = reactive({
         field: [{ required: true, message: "不能为空", trigger: "blur" }],
         aggregateQuery: [{ required: true, message: "不能为空", trigger: "blur" }],
         period: [
-            { required: true, message: "不能为空", trigger: "blur" },
+            { required: true, message: "不能为空", validator: numberValidate, trigger: "blur" },
             { type: 'number', required: true, message: "请输入纯数字", trigger: "blur" }
         ],
         periodUnit: [{ required: true, message: "不能为空", trigger: "blur" }],

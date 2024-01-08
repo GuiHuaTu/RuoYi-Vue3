@@ -10,9 +10,9 @@ export function listTag(query) {
 }
 
 // 查询详细
-export function getTag(dictId) {
+export function getTag(tagId) {
   return request({
-    url: '/tag/getTag/' + dictId,
+    url: '/tag/getTag/' + tagId,
     method: 'get'
   })
 }
@@ -36,9 +36,9 @@ export function updateTag(data) {
 }
 
 // 删除
-export function delTag(dictId) {
+export function delTag(tagId) {
   return request({
-    url: '/tag/delTag/' + dictId,
+    url: '/tag/delTag/' + tagId,
     method: 'delete'
   })
 }

@@ -28,7 +28,7 @@ import elementIcons from '@/components/SvgIcon/svgicon'
 
 import './permission' // permission control
 
-import { useDict } from '@/utils/dict'
+import { useDict ,useDictDynamics} from '@/utils/dict'
 import { parseTime, getDate,getTime,getDateTime,resetForm, addDateRange, handleTree, selectDictLabel, selectDictLabels } from '@/utils/tool'
 // 引入提示框，标题，直角坐标系，数据集，内置数据转换器组件，组件后缀都为 Component
 import {
@@ -78,6 +78,7 @@ const app = createApp(App)
 // 全局方法挂载 
 app.config.globalProperties.inject = inject
 app.config.globalProperties.useDict = useDict
+app.config.globalProperties.useDictDynamics = useDictDynamics
 app.config.globalProperties.download = download
 app.config.globalProperties.parseTime = parseTime
 app.config.globalProperties.getDate = getDate
@@ -218,6 +219,21 @@ const shortcuts = [
   }
 ];
 
+const isZsNumberalidate = (rule, value, callback) => {
+    if (rule.required) {
+        if (value === '' || value === null || value === undefined || value < 0) {
+            callback(new Error(rule.message));
+        }
+        else if (value < 0) {
+            callback(new Error('请输入大于0的数字'));
+        }
+        else {
+            callback()
+        }
+    } else {
+        callback();
+    }
+};
 
 const isNullValidate = (rule, value, callback) => {
     if (rule.required) {
@@ -274,12 +290,18 @@ app.config.globalProperties.$numberValidate = numberValidate;  //便于在模板
 // 使用 provide 将全局变量作为响应式对象
 app.provide('dateRangeValidate', dateRangeValidate); //便于在js部分可直接用
 // 使用 globalProperties 将全局变量附加到 Vue 实例上
-app.config.globalProperties.$dateRangeValidate = dateRangeValidate;  //便于在模板部分可直接用{{$numberValidate}}
+app.config.globalProperties.$dateRangeValidate = dateRangeValidate;  //便于在模板部分可直接用{{$dateRangeValidate}}
 
 // 使用 provide 将全局变量作为响应式对象
 app.provide('isNullValidate', isNullValidate); //便于在js部分可直接用
 // 使用 globalProperties 将全局变量附加到 Vue 实例上
-app.config.globalProperties.$isNullValidate = isNullValidate;  //便于在模板部分可直接用{{$numberValidate}}
+app.config.globalProperties.$isNullValidate = isNullValidate;  //便于在模板部分可直接用{{$isNullValidate}}
+
+
+// 使用 provide 将全局变量作为响应式对象
+app.provide('isZsNumberalidate', isZsNumberalidate); //便于在js部分可直接用
+// 使用 globalProperties 将全局变量附加到 Vue 实例上
+app.config.globalProperties.$isZsNumberalidate = isZsNumberalidate;  //便于在模板部分可直接用{{$isZsNumberalidate}}
 
 
 // 使用element-plus 并且设置全局的大小

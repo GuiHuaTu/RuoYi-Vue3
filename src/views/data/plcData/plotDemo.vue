@@ -138,8 +138,8 @@ const startEndShow = ref(false);
 
 const shortcuts = inject('shortcuts');
 const dateRangeValidate = inject('dateRangeValidate');
-const isNullValidate = inject('dateRangeValidate');
-const numberValidate = inject('dateRangeValidate');
+const isNullValidate = inject('isNullValidate');
+const numberValidate = inject('numberValidate');
 
 const data = reactive({
     form: {},
@@ -169,7 +169,7 @@ const data = reactive({
         period: [
             { required: true, message: "不能为空", trigger: "blur" },
             { type: 'number', required: true, message: "请输入数字！", trigger: "blur" },
-            { required: true, message: "请输入数字", validator: numberValidate, trigger: "blur" },
+            { required: true, message: "请输入数字", validator: numberValidate,  trigger: "blur" },
         ],
         periodUnit: [{ required: true, message: "不能为空", trigger: "blur" }],
         aggregateFun: [{ required: true, message: "不能为空", validator: isNullValidate, trigger: "blur" }],
