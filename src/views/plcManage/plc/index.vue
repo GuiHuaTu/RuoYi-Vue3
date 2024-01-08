@@ -306,14 +306,7 @@ async function plcTypeChange(value) {
    if (value) {
       let dictTypeActive = value + "_model_protocol";
       
-      var list = await proxy.useDictDynamics(dictTypeActive);
-
-      // const res = ref({});
-      // res.value[dictTypeActive] = [];
-      // await getDicts(dictTypeActive).then(resp =>  {
-      //   res.value[dictTypeActive] = resp.data.map(p => ({ label: p.dictLabel, value: p.dictValue, elTagType: p.listClass, elTagClass: p.cssClass }))
-      // })
-      // var list =  toRefs(res.value);
+      var list = await proxy.useDictDynamics(dictTypeActive); 
 
       sys_model_protocol.value = list[dictTypeActive].value;
 
