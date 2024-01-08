@@ -157,6 +157,7 @@
  
 <script setup name="Plc">
 import { listPlc, getPlc, delPlc, addPlc, updatePlc } from "@/api/plcManage/plc";
+// import { getDicts } from '@/api/system/dict/data'
 import useDictStore from '@/store/modules/dict'
 
 const { proxy } = getCurrentInstance();
@@ -300,18 +301,23 @@ function handleExport() {
 
 
 /** plc类型选择 */
-function plcTypeChange(value) {
+async function plcTypeChange(value) {
+   form.value.plcModelProtocol = "";
    if (value) {
       let dictTypeActive = value + "_model_protocol";
-      console.log(dictTypeActive);
-      var list = proxy.useDictDynamics(dictTypeActive);
+      
+      var list = await proxy.useDictDynamics(dictTypeActive);
+
+      // const res = ref({});
+      // res.value[dictTypeActive] = [];
+      // await getDicts(dictTypeActive).then(resp =>  {
+      //   res.value[dictTypeActive] = resp.data.map(p => ({ label: p.dictLabel, value: p.dictValue, elTagType: p.listClass, elTagClass: p.cssClass }))
+      // })
+      // var list =  toRefs(res.value);
+
       sys_model_protocol.value = list[dictTypeActive].value;
-      console.log(list);
-      console.log(list[dictTypeActive].value);
-      console.log(sys_model_protocol.value);
 
    } else {
-      form.value.plcModelProtocol = "";
       sys_model_protocol = ref([]);
    }
 }
