@@ -219,10 +219,10 @@ const shortcuts = [
   }
 ];
 
-const isZsNumberalidate = (rule, value, callback) => {
-    if (rule.required) {
-        if (value === '' || value === null || value === undefined || value < 0) {
-            callback(new Error(rule.message));
+const isZsNumberValidate = (rule, value, callback) => {
+        if (rule.required) {
+        if (value === '' || value === null || value === undefined ) {
+            callback(new Error('不能为空'));
         }
         else if (value < 0) {
             callback(new Error('请输入大于0的数字'));
@@ -299,9 +299,9 @@ app.config.globalProperties.$isNullValidate = isNullValidate;  //便于在模板
 
 
 // 使用 provide 将全局变量作为响应式对象
-app.provide('isZsNumberalidate', isZsNumberalidate); //便于在js部分可直接用
+app.provide('isZsNumberValidate', isZsNumberValidate); //便于在js部分可直接用
 // 使用 globalProperties 将全局变量附加到 Vue 实例上
-app.config.globalProperties.$isZsNumberalidate = isZsNumberalidate;  //便于在模板部分可直接用{{$isZsNumberalidate}}
+app.config.globalProperties.$isZsNumberValidate = isZsNumberValidate;  //便于在模板部分可直接用{{$isZsNumberValidate}}
 
 
 // 使用element-plus 并且设置全局的大小

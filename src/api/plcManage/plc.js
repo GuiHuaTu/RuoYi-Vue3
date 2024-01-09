@@ -51,3 +51,17 @@ export function optionselect() {
     method: 'get'
   })
 }
+// 获取串口列表
+export function getPortNames() {
+  return request({
+    url: '/plc/getPortNames',
+    method: 'get'
+  })
+} 
+// 获取系统配置列表
+export function getConfig(key) {
+  return request({
+    url: '/plc/getConfig/'+key,
+    method: 'get'
+  })
+}

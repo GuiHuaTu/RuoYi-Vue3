@@ -26,7 +26,6 @@ export function useDict(...args) {
  * 动态实时获取字典数据
  */
 export async function useDictDynamics(dictType) {
-  debugger
   const res = ref({});
   res.value[dictType] = [];
   await getDicts(dictType).then(resp => {

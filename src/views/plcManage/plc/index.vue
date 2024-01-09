@@ -11,12 +11,12 @@
          </el-form-item>
          <el-form-item label="PLC类型" prop="plcType">
             <el-select v-model="queryParams.plcType" placeholder="PLC类型" clearable style="width: 240px">
-               <el-option v-for="plc in sys_plc_type" :key="plc.value" :label="plc.label" :value="plc.value" />
+               <el-option v-for="item in sys_plc_type" :key="item.value" :label="item.label" :value="item.value" />
             </el-select>
          </el-form-item>
          <el-form-item label="状态" prop="status">
             <el-select v-model="queryParams.status" placeholder="PLC状态" clearable style="width: 240px">
-               <el-option v-for="plc in sys_normal_disable" :key="plc.value" :label="plc.label" :value="plc.value" />
+               <el-option v-for="item in sys_normal_disable" :key="item.value" :label="item.label" :value="item.value" />
             </el-select>
          </el-form-item>
          <!-- <el-form-item label="创建时间" style="width: 308px">
@@ -101,14 +101,16 @@
                   <el-row>
                      <el-form-item label="PLC类型" prop="plcType">
                         <el-select v-model="form.plcType" placeholder="PLC类型" clearable @change="plcTypeChange">
-                           <el-option v-for="plc in sys_plc_type" :key="plc.value" :label="plc.label" :value="plc.value" />
+                           <el-option v-for="item in sys_plc_type" :key="item.value" :label="item.label"
+                              :value="item.value" />
                         </el-select>
                      </el-form-item>
 
                      <el-form-item label="型号/协议" prop="plcModelProtocol">
-                        <el-select v-model="form.plcModelProtocol" placeholder="型号/协议" clearable>
-                           <el-option v-for="plc in sys_model_protocol" :key="plc.value" :label="plc.label"
-                              :value="plc.value" />
+                        <el-select v-model="form.plcModelProtocol" placeholder="型号/协议" clearable
+                           @change="plcModelProtocolChange">
+                           <el-option v-for="item in sys_model_protocol" :key="item.value" :label="item.label"
+                              :value="item.value" />
                         </el-select>
                      </el-form-item>
                   </el-row>
@@ -117,8 +119,8 @@
                      <el-form-item label="网络类型" prop="plcNetworkType">
                         <el-select v-model="form.plcNetworkType" placeholder="网络类型" clearable
                            @change="plcNetworkTypeChange">
-                           <el-option v-for="plc in sys_network_type" :key="plc.value" :label="plc.label"
-                              :value="plc.value" />
+                           <el-option v-for="item in sys_network_type" :key="item.value" :label="item.label"
+                              :value="item.value" :disabled="item.disabled" />
                         </el-select>
                      </el-form-item>
                      <el-form-item label="推送频率(ms)" prop="plcSendFrequ">
@@ -128,7 +130,7 @@
 
                   <el-form-item label="状态" prop="status">
                      <el-radio-group v-model="form.status">
-                        <el-radio v-for="plc in sys_normal_disable" :key="plc.value" :label="plc.value">{{ plc.label
+                        <el-radio v-for="item in sys_normal_disable" :key="item.value" :label="item.value">{{ item.label
                         }}</el-radio>
                      </el-radio-group>
                   </el-form-item>
@@ -138,6 +140,114 @@
 
                </el-tab-pane>
                <el-tab-pane label="连接配置">
+
+                  <!-- @*IP-Port参数显示------------------------------------------------------------------------------------*@ -->
+                  <!-- @*IP-Port参数显示*@ -->
+                  <div v-show="ipConfig">
+                     <el-row>
+                        <el-col :span="12">
+                           <el-form-item label="IP地址" prop="plcIp" :required="ipConfig">
+                              <el-input v-model="form.plcIp" placeholder="请输入IP地址" />
+                           </el-form-item>
+                        </el-col>
+                        <el-col :span="12">
+                           <el-form-item label="端口号" prop="plcPort" :required="ipConfig">
+                              <el-input-number v-model="form.plcPort" />
+                           </el-form-item>
+                        </el-col>
+                     </el-row>
+                  </div>
+
+                  <!-- @*串口参数显示------------------------------------------------------------------------------------*@ -->
+                  <!-- @*串口参数显示 *@ -->
+                  <div v-show="cardSerialShow">
+                     <el-row>
+                        <el-col :span="24">
+                           <el-divider class="dividerNew" content-position="left">串口参数</el-divider>
+                        </el-col>
+                     </el-row>
+                     <el-row>
+                        <el-col :span="12">
+                           <el-form-item label="COM口名称" prop="plcComName" :required="cardSerialShow">
+                              <el-select v-model="form.plcComName" placeholder="请选择COM口" clearable filterable allow-create
+                                 default-first-option>
+                                 <el-option v-for="dict in dictComPorts" :key="dict.value" :label="dict.label"
+                                    :value="dict.value"></el-option>
+                              </el-select>
+                           </el-form-item>
+                        </el-col>
+                        <el-col :span="12">
+                           <el-form-item label="波特率(bps)" prop="plcComBaudRate" :required="cardSerialShow">
+                              <el-input-number v-model="form.plcComBaudRate" />
+                           </el-form-item>
+                        </el-col>
+                     </el-row>
+                     <el-row>
+                        <el-col :span="12">
+                           <el-form-item label="奇偶校验位" prop="plcComParity" :required="cardSerialShow">
+                              <el-radio-group v-model="form.plcComParity">
+                                 <el-radio v-for="dict in sys_parity_options" :key="dict.value" :value="dict.value"
+                                    :label="dict.label">{{ dict.label }}</el-radio>
+                              </el-radio-group>
+                           </el-form-item>
+                        </el-col>
+                     </el-row>
+                     <el-row>
+                        <el-col :span="12">
+                           <el-form-item label="数据位" prop="plcComDataBits" :required="cardSerialShow">
+                              <el-input-number v-model="form.plcComDataBits" />
+                           </el-form-item>
+                        </el-col>
+                        <el-col :span="12">
+                           <el-form-item label="停止位" prop="plcComStopBits" :required="cardSerialShow">
+                              <el-input-number v-model="form.plcComStopBits" />
+                           </el-form-item>
+                        </el-col>
+                     </el-row>
+                  </div>
+
+                  <!-- @*modbus参数显示------------------------------------------------------------------------------------*@ -->
+                  <!-- @*modbus参数显示*@ -->
+                  <div v-show="cardModbusShow">
+                     <el-row>
+                        <el-col :span="24">
+                           <el-divider class="dividerNew" content-position="left">modbus参数</el-divider>
+                        </el-col>
+                     </el-row>
+                     <el-row>
+                        <el-col :span="12">
+                           <el-form-item label="设备站号" prop="plcModbusStation" :required="cardModbusShow">
+                              <el-input-number v-model="form.plcModbusStation" />
+                           </el-form-item>
+                        </el-col>
+                        <el-col :span="12">
+                           <el-form-item label="数据格式" prop="plcModbusDataformat" :required="cardModbusShow">
+                              <el-select v-model="form.plcModbusDataformat" placeholder="请选择数据格式">
+                                 <el-option v-for="dict in sys_data_format" :key="dict.value" :label="dict.label"
+                                    :value="dict.value"></el-option>
+                              </el-select>
+                           </el-form-item>
+                        </el-col>
+                     </el-row>
+                     <el-row>
+                        <el-col :span="12">
+                           <el-form-item label="零为起始位" prop="plcModbusStartwithzero" :required="cardModbusShow">
+                              <el-radio-group v-model="form.plcModbusStartwithzero">
+                                 <el-radio v-for="dict in sys_yes_no" :key="dict.value" :value="dict.value"
+                                    :label="dict.label">{{ dict.label }}</el-radio>
+                              </el-radio-group>
+                           </el-form-item>
+                        </el-col>
+                        <el-col :span="12">
+                           <el-form-item label="字符串颠倒" prop="plcModbusStringreverse" :required="cardModbusShow">
+                              <el-radio-group v-model="form.plcModbusStringreverse">
+                                 <el-radio v-for="dict in sys_yes_no" :key="dict.value" :value="dict.value"
+                                    :label="dict.label">{{ dict.label }}</el-radio>
+                              </el-radio-group>
+                           </el-form-item>
+                        </el-col>
+                     </el-row>
+                  </div>
 
                </el-tab-pane>
             </el-tabs>
@@ -156,19 +266,52 @@
 </template>
  
 <script setup name="Plc">
-import { listPlc, getPlc, delPlc, addPlc, updatePlc } from "@/api/plcManage/plc";
-// import { getDicts } from '@/api/system/dict/data'
-import useDictStore from '@/store/modules/dict'
+import { listPlc, getPlc, delPlc, addPlc, updatePlc, getPortNames, getConfig } from "@/api/plcManage/plc";
 
 const { proxy } = getCurrentInstance();
-const { sys_normal_disable } = proxy.useDict("sys_normal_disable");
+const { sys_normal_disable, sys_yes_no } = proxy.useDict("sys_normal_disable", 'sys_yes_no');
 const { sys_plc_type } = proxy.useDict("sys_plc_type");
 const { sys_network_type } = proxy.useDict("sys_network_type");
+const { sys_parity_options } = proxy.useDict("sys_parity_options");
+const { sys_data_format } = proxy.useDict('sys_data_format');
 
-const isZsNumberalidate = inject('isZsNumberalidate');
+
+const isZsNumberValidate = inject('isZsNumberValidate');
+
+const isRequiredDynamicsValidate = (rule, value, callback) => {
+   if (ipConfig.value) {
+      if (value === '' || value === null || value === undefined) {
+         callback(new Error(rule.message));
+      }
+      else {
+         callback()
+      }
+   } else {
+      callback();
+   }
+};
+const isNetworkValidate = (rule, value, callback) => {
+   if (rule.required) {
+      if (value === '' || value === null || value === undefined) {
+         callback(new Error('不能为空'));
+      }
+      else if (sys_network_type.value.filter((p) => p.value === value && p.disabled == true).length > 0) {
+         callback(new Error('该选项不可用，请重新选择！'));
+      }
+      else {
+         callback()
+      }
+   } else {
+      callback();
+   }
+};
+
 
 const typeList = ref([]);
 const open = ref(false);
+const ipConfig = ref(false);
+const cardSerialShow = ref(false);
+const cardModbusShow = ref(false);
 const loading = ref(true);
 const showSearch = ref(true);
 const ids = ref([]);
@@ -177,6 +320,7 @@ const multiple = ref(true);
 const total = ref(0);
 const title = ref("");
 const dateRange = ref([]);
+const dictComPorts = ref([]);
 
 const data = reactive({
    form: {},
@@ -192,11 +336,21 @@ const data = reactive({
       plcCode: [{ required: true, message: "不能为空", trigger: "blur" }],
       plcType: [{ required: true, message: "不能为空", trigger: "blur" }],
       plcSendFrequ: [
-         { required: true, message: "不能为空", validator: isZsNumberalidate, trigger: "blur" },
+         { required: true, validator: isZsNumberValidate, trigger: "blur" },
          { type: 'number', required: true, message: "请输入数值", trigger: "blur" }
       ],
-      plcNetworkType: [{ required: true, message: "不能为空", trigger: "blur" }],
+      plcNetworkType: [{ required: true, message: "不能为空", trigger: "blur" },
+      { required: true, validator: isNetworkValidate, trigger: "blur" }],
       plcModelProtocol: [{ required: true, message: "不能为空", trigger: "blur" }],
+      plcIp: [{ message: "不能为空", validator: isRequiredDynamicsValidate, trigger: "blur" }],
+      plcPort: [
+         { message: "不能为空", validator: isRequiredDynamicsValidate, trigger: "blur" },
+         { type: 'number', required: true, validator: isZsNumberValidate, trigger: "blur" }
+      ],
+      plcSendFrequ: [
+         { message: "不能为空", validator: isRequiredDynamicsValidate, trigger: "blur" },
+         { type: 'number', required: true, validator: isZsNumberValidate, trigger: "blur" }
+      ],
    },
 });
 
@@ -242,7 +396,9 @@ function resetQuery() {
 /** 新增按钮操作 */
 function handleAdd() {
    reset();
+   getComPortNames();
    form.value.plcSendFrequ = 1000;
+
    open.value = true;
    title.value = "添加PLC";
 }
@@ -305,23 +461,76 @@ async function plcTypeChange(value) {
    form.value.plcModelProtocol = "";
    if (value) {
       let dictTypeActive = value + "_model_protocol";
-      
-      var list = await proxy.useDictDynamics(dictTypeActive); 
+
+      var list = await proxy.useDictDynamics(dictTypeActive);
 
       sys_model_protocol.value = list[dictTypeActive].value;
+
+      if (value == "siemens") {
+         form.value.plcPort = 22;
+         cardModbusShow.value = false;
+      }
+      if (value == "modbus") {
+         cardModbusShow.value = true;
+      }
 
    } else {
       sys_model_protocol = ref([]);
    }
 }
 
+/** plc型号/协议*/
+async function plcModelProtocolChange(value) {
+   debugger
+   if (value) {
+      let configKey = "sys." + value + ".networkType";
+
+      var config = await getSingleConfig(configKey);
+      if (typeof config.value == "undefined") {
+         sys_network_type.value = await proxy.useDict("sys_network_type")["sys_network_type"].value;
+      } else {
+         var object = JSON.parse(config.value);
+         sys_network_type.value = object;
+      }
+   }
+   else {
+      sys_network_type.value = await proxy.useDict("sys_network_type")["sys_network_type"].value;
+   }
+}
+
 /** plc网络类型选择 */
 function plcNetworkTypeChange(value) {
-   if (value) {
-
-   } else {
-
+   if (value == '0') {//网络
+      ipConfig.value = true;
+      cardSerialShow.value = false;
    }
+   else if (value == '1') {//串口
+      ipConfig.value = false;
+      cardSerialShow.value = true;
+
+      form.value.plcComBaudRate = 9600;
+      form.value.plcComDataBits = 8;
+      form.value.plcComStopBits = 1;
+      form.value.plcComParity = "0";
+   }
+}
+
+// 加载设备串口
+function getComPortNames() {
+   getPortNames().then(response => {
+      dictComPorts.value = response.data;
+   });
+}
+// 加载指定配置
+async function getSingleConfig(key) {
+   const value = ref(undefined);
+   await getConfig(key).then(response => {
+      if (response && response.data && response.data.length > 0) {
+         value.value = response.data[0].configValue;
+         return value;
+      }
+   });
+   return value;
 }
 
 getList();
