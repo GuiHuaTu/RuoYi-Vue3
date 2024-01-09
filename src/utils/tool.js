@@ -271,3 +271,13 @@ export function getNormalPath(p) {
 export function blobValidate(data) {
   return data.type !== 'application/json'
 }
+
+export function validateIP(ip) {
+  var ipPattern = /^((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9][0-9]|[0-9])(\.(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9][0-9]|[0-9])){3})$/;
+  
+  if (ipPattern.test(ip)) {
+      return true; // IP地址格式有效
+  } else {
+      return false; // IP地址格式无效
+  }
+}

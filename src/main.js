@@ -29,7 +29,9 @@ import elementIcons from '@/components/SvgIcon/svgicon'
 import './permission' // permission control
 
 import { useDict ,useDictDynamics} from '@/utils/dict'
-import { parseTime, getDate,getTime,getDateTime,resetForm, addDateRange, handleTree, selectDictLabel, selectDictLabels } from '@/utils/tool'
+import { parseTime, getDate,getTime,getDateTime,resetForm, addDateRange, handleTree, selectDictLabel, selectDictLabels 
+    ,validateIP
+} from '@/utils/tool'
 // 引入提示框，标题，直角坐标系，数据集，内置数据转换器组件，组件后缀都为 Component
 import {
   TitleComponent,
@@ -89,6 +91,7 @@ app.config.globalProperties.handleTree = handleTree
 app.config.globalProperties.addDateRange = addDateRange
 app.config.globalProperties.selectDictLabel = selectDictLabel
 app.config.globalProperties.selectDictLabels = selectDictLabels
+app.config.globalProperties.validateIP = validateIP
 
 // 全局组件挂载
 app.component('DictTag', DictTag)
@@ -222,7 +225,15 @@ const shortcuts = [
 const isZsNumberValidate = (rule, value, callback) => {
         if (rule.required) {
         if (value === '' || value === null || value === undefined ) {
-            callback(new Error('不能为空'));
+            callback(new Error('请输入有效值'));
+        }
+        else if(typeof value !== "number"){
+            if (parseInt(value) < 0) {
+                callback(new Error('请输入大于0的数字'));
+            }
+            else {
+                callback()
+            }
         }
         else if (value < 0) {
             callback(new Error('请输入大于0的数字'));
@@ -260,13 +271,32 @@ const dateRangeValidate = (rule, value, callback) => {
     }
 };
 
+const IPValidator = (rule, value, callback) => {
+    if (rule.required) {
+        if (value === '' || value === null || value === undefined) {
+            callback(new Error('请输入IP'));
+        }
+        else {
+            if (!validateIP(value )) {
+                callback(new Error('请输入有效IP'));
+            }
+            callback()
+        }
+    } else {
+        callback();
+    }
+};
+
 const numberValidate = (rule, value, callback) => {
     if (rule.required) {
-        if (value === '') {
+        if (value === '' || value === null || value === undefined) {
             callback(new Error(rule.message));
         }
         else {
-            if (value <= 0) {
+            if(typeof value !== "number"){
+                callback(new Error('请输入有效数值'));
+            }
+            else if (value <= 0) {
                 callback(new Error('输入的数量应大于0'));
             }
             callback()
@@ -302,6 +332,11 @@ app.config.globalProperties.$isNullValidate = isNullValidate;  //便于在模板
 app.provide('isZsNumberValidate', isZsNumberValidate); //便于在js部分可直接用
 // 使用 globalProperties 将全局变量附加到 Vue 实例上
 app.config.globalProperties.$isZsNumberValidate = isZsNumberValidate;  //便于在模板部分可直接用{{$isZsNumberValidate}}
+
+// 使用 provide 将全局变量作为响应式对象
+app.provide('IPValidator', IPValidator); //便于在js部分可直接用
+// 使用 globalProperties 将全局变量附加到 Vue 实例上
+app.config.globalProperties.$IPValidator = IPValidator;  //便于在模板部分可直接用{{$IPValidator}}
 
 
 // 使用element-plus 并且设置全局的大小
