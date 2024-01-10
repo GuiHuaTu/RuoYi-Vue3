@@ -15,7 +15,7 @@
             </el-select>
          </el-form-item>
          <el-form-item label="状态" prop="status">
-            <el-select v-model="queryParams.status" placeholder="PLC状态" clearable style="width: 240px">
+            <el-select v-model="queryParams.status" placeholder="状态" clearable style="width: 240px">
                <el-option v-for="item in sys_normal_disable" :key="item.value" :label="item.label" :value="item.value" />
             </el-select>
          </el-form-item>
@@ -31,7 +31,8 @@
 
       <el-row :gutter="10" class="mb8">
          <el-col :span="1.5">
-            <el-button type="primary" plain icon="Plus" @click="handleAdd" v-hasPermi="['plcManage:plc:add']">新增</el-button>
+            <el-button type="primary" plain icon="Plus" @click="handleAdd"
+               v-hasPermi="['plcManage:plc:add']">新增</el-button>
          </el-col>
          <el-col :span="1.5">
             <el-button type="success" plain icon="Edit" :disabled="single" @click="handleUpdate"
@@ -129,12 +130,23 @@
                      </el-form-item>
                   </el-row>
 
-                  <el-form-item label="状态" prop="status">
-                     <el-radio-group v-model="form.status">
-                        <el-radio v-for="item in sys_normal_disable" :key="item.value" :label="item.value">{{ item.label
-                        }}</el-radio>
-                     </el-radio-group>
-                  </el-form-item>
+                  <el-row>
+                     <el-form-item label="采集驱动" prop="plcAcquisitionDriver">
+                        <el-select v-model="form.plcAcquisitionDriver" placeholder="采集驱动" clearable
+                           @change="plcNetworkTypeChange">
+                           <el-option v-for="item in sys_acquisition_driver" :key="item.value" :label="item.label"
+                              :value="item.value" :disabled="item.disabled" />
+                        </el-select>
+                     </el-form-item>
+                     <el-form-item label="状态" prop="status">
+                        <el-radio-group v-model="form.status">
+                           <el-radio v-for="item in sys_normal_disable" :key="item.value" :label="item.value">{{ item.label
+                           }}</el-radio>
+                        </el-radio-group>
+                     </el-form-item>
+                  </el-row>
+
+
                   <el-form-item label="备注" prop="remark">
                      <el-input v-model="form.remark" type="textarea" placeholder="请输入内容"></el-input>
                   </el-form-item>
@@ -294,6 +306,8 @@ const { sys_network_type } = proxy.useDict("sys_network_type");
 const { sys_parity_options } = proxy.useDict("sys_parity_options");
 const { sys_data_format } = proxy.useDict("sys_data_format");
 
+const sys_model_protocol = ref([]);
+const sys_acquisition_driver = ref([]);
 
 const isZsNumberValidate = inject('isZsNumberValidate');
 const IPValidator = inject('IPValidator');
@@ -318,6 +332,7 @@ const isNetworkValidate = (rule, value, callback) => {
 
 const typeList = ref([]);
 const open = ref(false);
+const actionAdd = ref(false);
 const cardIpConfigShow = ref(false);
 const cardComShow = ref(false);
 const cardModbusShow = ref(false);
@@ -349,6 +364,9 @@ const data = reactive({
       plcType: [{ required: true, message: "不能为空", trigger: "blur" }],
       plcSendFrequ: [
          { required: true, validator: isZsNumberValidate, trigger: "blur" },
+      ],
+      plcAcquisitionDriver: [
+         { required: true, message: "不能为空", trigger: "blur" },
       ],
       plcNetworkType: [
          { required: true, message: "不能为空", trigger: "blur" },
@@ -403,7 +421,6 @@ const data = reactive({
 });
 
 const { queryParams, form, rules } = toRefs(data);
-const sys_model_protocol = ref([]);
 
 /** 查询PLC类型列表 */
 function getList() {
@@ -455,6 +472,7 @@ function handleAdd() {
 
    open.value = true;
    title.value = "添加PLC";
+   actionAdd.value = true;
 }
 /** 多选框选中数据 */
 function handleSelectionChange(selection) {
@@ -471,6 +489,8 @@ function handleUpdate(row) {
       form.value = response.data;
       open.value = true;
       title.value = "修改PLC";
+      actionAdd.value = false;
+
       plcTypeChange(form.value.plcType);
       plcModelProtocolChange(form.value.plcModelProtocol);
       plcNetworkTypeChange(form.value.plcNetworkType);
@@ -527,40 +547,48 @@ function handleExport() {
 
 /** plc类型选择 */
 async function plcTypeChange(value) {
-   form.value.plcModelProtocol = "";
+   if (actionAdd.value) form.value.plcModelProtocol = "";
    if (value) {
       let dictTypeActive = value + "_model_protocol";
-
       var list = await proxy.useDictDynamics(dictTypeActive);
-
       sys_model_protocol.value = list[dictTypeActive].value;
 
+      let driver = "sys_" + value + "_driver";
+      var list = await proxy.useDictDynamics(driver);
+      sys_acquisition_driver.value = list[driver].value;
+
       if (value == "siemens") {
-         form.value.plcPort = 22;
-         form.value.plcSiemensRack = 0;
-         form.value.plcSiemensSlot = 1;
          cardSiemensShow.value = true;
          cardModbusShow.value = false;
+
+         if (actionAdd.value) {
+            form.value.plcPort = 22;
+            form.value.plcSiemensRack = 0;
+            form.value.plcSiemensSlot = 1;
+         }
+
       }
       if (value == "modbus") {
          cardSiemensShow.value = false;
          cardModbusShow.value = true;
-         form.value.plcModbusStation = 1;
-         form.value.plcModbusDataformat = 'ABCD';
-         form.value.plcModbusStringreverse = "N";
-         form.value.plcModbusStartwithzero = 'Y';
+
+         if (actionAdd.value) {
+            form.value.plcModbusStation = 1;
+            form.value.plcModbusDataformat = 'ABCD';
+            form.value.plcModbusStringreverse = "N";
+            form.value.plcModbusStartwithzero = 'Y';
+         }
       }
    } else {
       sys_model_protocol = ref([]);
+      sys_acquisition_driver = ref([]);
    }
 }
 
 /** plc型号/协议选择 */
-async function plcModelProtocolChange(value) {
-   debugger
+async function plcModelProtocolChange(value) { 
    if (value) {
       let configKey = "sys." + value + ".networkType";
-
       var config = await getSingleConfig(configKey);
       if (typeof config.value == "undefined") {
          sys_network_type.value = await proxy.useDict("sys_network_type")["sys_network_type"].value;
@@ -584,10 +612,12 @@ function plcNetworkTypeChange(value) {
       cardIpConfigShow.value = false;
       cardComShow.value = true;
 
-      form.value.plcComBaudRate = 9600;
-      form.value.plcComDataBits = 8;
-      form.value.plcComStopBits = 1;
-      form.value.plcComParity = "0";
+      if (actionAdd.value) {
+         form.value.plcComBaudRate = 9600;
+         form.value.plcComDataBits = 8;
+         form.value.plcComStopBits = 1;
+         form.value.plcComParity = "0";
+      }
    }
 }
 

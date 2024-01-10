@@ -44,13 +44,6 @@ export function delPlc(plcId) {
 }
 
 
-// 获取选择框列表
-export function optionselect() {
-  return request({
-    url: '/plc/optionselect',
-    method: 'get'
-  })
-}
 // 获取串口列表
 export function getPortNames() {
   return request({

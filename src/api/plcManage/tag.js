@@ -41,12 +41,12 @@ export function delTag(tagId) {
     url: '/tag/delTag/' + tagId,
     method: 'delete'
   })
-}
+} 
 
-// 获取选择框列表
-export function optionselect() {
+// 获取PLC选择框列表
+export function optionselectPlc() {
   return request({
-    url: '/tag/optionselect',
+    url: '/plc/optionselectPlc',
     method: 'get'
   })
 }
