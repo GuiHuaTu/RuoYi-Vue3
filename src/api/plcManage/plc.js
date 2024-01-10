@@ -58,3 +58,13 @@ export function getConfig(key) {
     method: 'get'
   })
 }
+
+// 获取系统配置列表
+export function acquisitionStart(data) {
+  return request({
+    url: '/plc/acquisitionStart',
+    method: 'post',
+    data: data
+  })
+}
+

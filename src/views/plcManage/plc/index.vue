@@ -46,6 +46,12 @@
             <el-button type="warning" plain icon="Download" @click="handleExport"
                v-hasPermi="['plcManage:plc:export']">导出</el-button>
          </el-col>
+         
+         <el-col :span="1.5">
+            <el-button type="warning" plain icon="Refresh" @click="handleAcquisition"
+               v-hasPermi="['plcManage:plc:acquisition']">刷新采集作业</el-button>
+         </el-col>
+         
          <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
       </el-row>
 
@@ -296,7 +302,7 @@
 </template>
  
 <script setup name="Plc">
-import { listPlc, getPlc, delPlc, addPlc, updatePlc, getPortNames, getConfig } from "@/api/plcManage/plc";
+import { listPlc, getPlc, delPlc, addPlc, updatePlc, getPortNames, getConfig, acquisitionStart } from "@/api/plcManage/plc";
 
 const { proxy } = getCurrentInstance();
 const { sys_normal_disable } = proxy.useDict("sys_normal_disable");
@@ -544,6 +550,10 @@ function handleExport() {
    }, `plc_${new Date().getTime()}.xls`);
 }
 
+/** 重启采集 */
+function handleAcquisition(){
+   acquisitionStart();
+}
 
 /** plc类型选择 */
 async function plcTypeChange(value) {

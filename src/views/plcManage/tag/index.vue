@@ -7,7 +7,13 @@
                   :value="item.plcCode"></el-option>
             </el-select>
          </el-form-item>
-         <el-form-item label="点位代码" prop="tagCode" v-show="false">
+         <el-form-item label="点位组" prop="tagGroup">
+            <el-select v-model="queryParams.tagGroup" placeholder="请选择监控组" clearable @keyup.enter="handleQuery">
+               <el-option v-for="item in sys_tag_group" :key="item.value" :label="item.label"
+                  :value="item.value"></el-option>
+            </el-select>
+         </el-form-item>
+         <el-form-item label="点位代码" prop="tagCode">
             <el-input v-model="queryParams.tagCode" placeholder="请输入点位代码" clearable @keyup.enter="handleQuery" />
          </el-form-item>
          <el-form-item label="点位名称" prop="tagName">
@@ -56,6 +62,8 @@
          </el-table-column>
          <el-table-column label="ID" align="center" prop="tagId">
          </el-table-column>
+         <el-table-column label="点位组" align="center" prop="tagGroup" :show-overflow-tooltip="true">
+         </el-table-column>
          <el-table-column label="设备代码" align="center" prop="plcCode" :show-overflow-tooltip="true">
          </el-table-column>
          <el-table-column label="点位代码" align="center" prop="tagCode" :show-overflow-tooltip="true">
@@ -98,6 +106,18 @@
       <!-- 添加或修改对话框 -->
       <el-dialog :title="title" v-model="open" width="780px" append-to-body>
          <el-form ref="tagRef" :model="form" :rules="rules" label-width="120px">
+            <el-row>
+
+               <el-form-item label="点位组" prop="tagGroup">
+                  <el-select v-model="form.tagGroup" placeholder="请选择点位组" @change="plcCodeChange">
+                     <el-option v-for="item in sys_tag_group" :key="item.value" :label="item.label"
+                        :value="item.value"></el-option>
+                  </el-select>
+               </el-form-item>
+
+               <el-button type="text" icon="Add" @click="handleAddTagGroup"
+                  v-hasPermi="['plcManage:tag:addGroup']">新增点位组</el-button>
+            </el-row>
             <el-row>
                <el-form-item label="设备名称" prop="plcCode">
                   <el-select v-model="form.plcCode" placeholder="请选择设备" @change="plcCodeChange">
@@ -209,10 +229,13 @@
 <script setup name="Tag">
 import { listTag, getTag, delTag, addTag, updateTag, optionselectPlc } from "@/api/plcManage/tag";
 import { getToken } from "@/utils/auth.js";
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { addData } from "@/api/system/dict/data";
 
 const { proxy } = getCurrentInstance();
 const { sys_normal_disable } = proxy.useDict("sys_normal_disable");
 const { sys_read_write } = proxy.useDict("sys_read_write");
+const sys_tag_group = ref([]);
 const sys_tag_datatype = ref([]);
 
 const isZsNumberValidate = inject('isZsNumberValidate');
@@ -241,6 +264,7 @@ const data = reactive({
       status: undefined
    },
    rules: {
+      tagGroup: [{ required: true, message: "不能为空", trigger: "blur" }],
       tagName: [{ required: true, message: "不能为空", trigger: "blur" }],
       tagCode: [{ required: true, message: "不能为空", trigger: "blur" }],
       plcCode: [{ required: true, message: "不能为空", trigger: "blur" }],
@@ -269,9 +293,9 @@ const data = reactive({
 });
 
 const { queryParams, form, rules, upload } = toRefs(data);
- 
+
 /** 查询TAG类型列表 */
-function getList() { 
+function getList() {
    loading.value = true;
    listTag(proxy.addDateRange(queryParams.value, dateRange.value)).then(response => {
       tagList.value = response.data;
@@ -398,11 +422,42 @@ async function getTagDataTypeList(driver) {
       sys_tag_datatype = ref([]);
    }
 }
+/** 查询点位数据组列表 */
+async function getTagGroupList() {
+   let datatype = "sys_tag_group";
+   var list = await proxy.useDictDynamics(datatype);
+   sys_tag_group.value = list[datatype].value;
+}
 
 
+const handleAddTagGroup = () => {
+   ElMessageBox.prompt('点位数据组', '新增', {
+      confirmButtonText: '确认',
+      cancelButtonText: '取消',
+      inputPattern: /^.+$/,
+      inputErrorMessage: '请输入组名',
+   })
+      .then(({ value }) => {
+         addData({ dictType: "sys_tag_group", dictValue: value, dictLabel: value, listClass: "info", dictSort: 1 }).then(async response => {
+            await getTagGroupList();
+            form.value.tagGroup = value;
+            ElMessage({
+               type: 'success',
+               message: `新增点位数据组:${value}`,
+            })
+         });
+      })
+      .catch(() => {
+         ElMessage({
+            type: 'info',
+            message: '新增点位数据组失败！',
+         })
+      })
+}
 
 
 getPlcList();
+getTagGroupList();
 getList();
 </script>
  
