@@ -54,8 +54,8 @@
          <el-table-column label="PLC名称" align="center" prop="plcName" :show-overflow-tooltip="true" />
          <el-table-column label="PLC编码" align="center" prop="plcCode" :show-overflow-tooltip="true" />
          <el-table-column label="PLC类型" align="center" :show-overflow-tooltip="true">
-            <template #default="scope"> 
-               <dict-tag :options="sys_plc_type" :value="scope.row.plcType" /> 
+            <template #default="scope">
+               <dict-tag :options="sys_plc_type" :value="scope.row.plcType" />
             </template>
          </el-table-column>
          <el-table-column label="IP" align="center" prop="plcIp" :show-overflow-tooltip="true" />
@@ -92,8 +92,8 @@
                <el-form-item label="PLC名称" prop="plcName">
                   <el-input v-model="form.plcName" placeholder="请输入PLC名称" />
                </el-form-item>
-               <el-form-item label="PLC代码" prop="plcCode" >
-                  <el-input v-model="form.plcCode" placeholder="请输入PLC代码"  :disabled="plcCodeIsDisabled"  />
+               <el-form-item label="PLC代码" prop="plcCode">
+                  <el-input v-model="form.plcCode" placeholder="请输入PLC代码" :disabled="plcCodeIsDisabled" />
                </el-form-item>
             </el-row>
 
@@ -147,12 +147,12 @@
                   <div v-show="cardIpConfigShow">
                      <el-row>
                         <el-col :span="12">
-                           <el-form-item label="IP地址" prop="plcIp"  :required="cardIpConfigShow"   >
+                           <el-form-item label="IP地址" prop="plcIp" :required="cardIpConfigShow">
                               <el-input v-model="form.plcIp" placeholder="请输入IP地址" />
                            </el-form-item>
                         </el-col>
                         <el-col :span="12">
-                           <el-form-item label="端口号" prop="plcPort"   :required="cardIpConfigShow"  >
+                           <el-form-item label="端口号" prop="plcPort" :required="cardIpConfigShow">
                               <el-input-number v-model="form.plcPort" />
                            </el-form-item>
                         </el-col>
@@ -170,12 +170,12 @@
                      </el-row>
                      <el-row>
                         <el-col :span="12">
-                           <el-form-item label="设备站号" prop="plcModbusStation"   :required="cardModbusShow" >
+                           <el-form-item label="设备站号" prop="plcModbusStation" :required="cardModbusShow">
                               <el-input-number v-model="form.plcModbusStation" />
                            </el-form-item>
                         </el-col>
                         <el-col :span="12">
-                           <el-form-item label="数据格式" prop="plcModbusDataformat"  :required="cardModbusShow" >
+                           <el-form-item label="数据格式" prop="plcModbusDataformat" :required="cardModbusShow">
                               <el-select v-model="form.plcModbusDataformat" placeholder="请选择数据格式">
                                  <el-option v-for="item in sys_data_format" :key="item.value" :label="item.label"
                                     :value="item.value"></el-option>
@@ -185,7 +185,7 @@
                      </el-row>
                      <el-row>
                         <el-col :span="12">
-                           <el-form-item label="零为起始位" prop="plcModbusStartwithzero"  :required="cardModbusShow" >
+                           <el-form-item label="零为起始位" prop="plcModbusStartwithzero" :required="cardModbusShow">
                               <el-radio-group v-model="form.plcModbusStartwithzero">
                                  <el-radio v-for="item in sys_yes_no" :key="item.value" :label="item.value">{{ item.label
                                  }}</el-radio>
@@ -193,7 +193,7 @@
                            </el-form-item>
                         </el-col>
                         <el-col :span="12">
-                           <el-form-item label="字符串颠倒" prop="plcModbusStringreverse"  :required="cardModbusShow" >
+                           <el-form-item label="字符串颠倒" prop="plcModbusStringreverse" :required="cardModbusShow">
                               <el-radio-group v-model="form.plcModbusStringreverse">
                                  <el-radio v-for="item in sys_yes_no" :key="item.value" :label="item.value">{{ item.label
                                  }}</el-radio>
@@ -213,7 +213,7 @@
                      </el-row>
                      <el-row>
                         <el-col :span="12">
-                           <el-form-item label="COM口名称" prop="plcComName"  :required="cardComShow"  >
+                           <el-form-item label="COM口名称" prop="plcComName" :required="cardComShow">
                               <el-select v-model="form.plcComName" placeholder="请选择COM口" clearable filterable allow-create
                                  default-first-option>
                                  <el-option v-for="item in dictComPorts" :key="item.value" :label="item.label"
@@ -222,14 +222,14 @@
                            </el-form-item>
                         </el-col>
                         <el-col :span="12">
-                           <el-form-item label="波特率(bps)" prop="plcComBaudRate"  :required="cardComShow"  >
+                           <el-form-item label="波特率(bps)" prop="plcComBaudRate" :required="cardComShow">
                               <el-input-number v-model="form.plcComBaudRate" />
                            </el-form-item>
                         </el-col>
                      </el-row>
                      <el-row>
                         <el-col :span="12">
-                           <el-form-item label="奇偶校验位" prop="plcComParity"  :required="cardComShow" >
+                           <el-form-item label="奇偶校验位" prop="plcComParity" :required="cardComShow">
                               <el-radio-group v-model="form.plcComParity">
                                  <el-radio v-for="item in sys_parity_options" :key="item.value" :label="item.value">{{
                                     item.label }}</el-radio>
@@ -239,18 +239,34 @@
                      </el-row>
                      <el-row>
                         <el-col :span="12">
-                           <el-form-item label="数据位" prop="plcComDataBits"  :required="cardComShow"  >
+                           <el-form-item label="数据位" prop="plcComDataBits" :required="cardComShow">
                               <el-input-number v-model="form.plcComDataBits" />
                            </el-form-item>
                         </el-col>
                         <el-col :span="12">
-                           <el-form-item label="停止位" prop="plcComStopBits" :required="cardComShow" >
+                           <el-form-item label="停止位" prop="plcComStopBits" :required="cardComShow">
                               <el-input-number v-model="form.plcComStopBits" />
                            </el-form-item>
                         </el-col>
                      </el-row>
                   </div>
 
+               </el-tab-pane>
+               <el-tab-pane label="设备参数">
+                  <div v-show="cardSiemensShow">
+                     <el-row>
+                        <el-col :span="12">
+                           <el-form-item label="机架Rack" prop="plcSiemensRack" :required="cardSiemensShow">
+                              <el-input-number v-model="form.plcSiemensRack" />
+                           </el-form-item>
+                        </el-col>
+                        <el-col :span="12">
+                           <el-form-item label="插槽Slot" prop="plcSiemensSlot" :required="cardSiemensShow">
+                              <el-input-number v-model="form.plcSiemensSlot" />
+                           </el-form-item>
+                        </el-col>
+                     </el-row>
+                  </div>
                </el-tab-pane>
             </el-tabs>
 
@@ -305,6 +321,8 @@ const open = ref(false);
 const cardIpConfigShow = ref(false);
 const cardComShow = ref(false);
 const cardModbusShow = ref(false);
+const cardSiemensShow = ref(false);
+
 const loading = ref(true);
 const showSearch = ref(true);
 const ids = ref([]);
@@ -372,6 +390,15 @@ const data = reactive({
       plcModbusStringreverse: [
          { message: "不能为空", required: cardModbusShow.value, trigger: "blur" },
       ],
+      plcSiemensRack: [
+         { message: "不能为空", required: cardSiemensShow.value, trigger: "blur" },
+         { type: 'number', required: cardSiemensShow.value, validator: isZsNumberValidate, trigger: "blur" }
+      ],
+      plcSiemensSlot: [
+         { message: "不能为空", required: cardSiemensShow.value, trigger: "blur" },
+         { type: 'number', required: cardSiemensShow.value, validator: isZsNumberValidate, trigger: "blur" }
+      ],
+
    },
 });
 
@@ -401,6 +428,11 @@ function reset() {
       status: "0",
       remark: undefined
    };
+
+   cardIpConfigShow.value = false;
+   cardComShow.value = false;
+   cardModbusShow.value = false;
+   cardSiemensShow.value = false;
    proxy.resetForm("plcRef");
 }
 /** 搜索按钮操作 */
@@ -439,7 +471,11 @@ function handleUpdate(row) {
       form.value = response.data;
       open.value = true;
       title.value = "修改PLC";
+      plcTypeChange(form.value.plcType);
+      plcModelProtocolChange(form.value.plcModelProtocol);
+      plcNetworkTypeChange(form.value.plcNetworkType);
    });
+
 }
 /** 提交按钮 */
 function submitForm() {
@@ -501,9 +537,13 @@ async function plcTypeChange(value) {
 
       if (value == "siemens") {
          form.value.plcPort = 22;
+         form.value.plcSiemensRack = 0;
+         form.value.plcSiemensSlot = 1;
+         cardSiemensShow.value = true;
          cardModbusShow.value = false;
       }
       if (value == "modbus") {
+         cardSiemensShow.value = false;
          cardModbusShow.value = true;
          form.value.plcModbusStation = 1;
          form.value.plcModbusDataformat = 'ABCD';
@@ -515,7 +555,7 @@ async function plcTypeChange(value) {
    }
 }
 
-/** plc型号/协议*/
+/** plc型号/协议选择 */
 async function plcModelProtocolChange(value) {
    debugger
    if (value) {
