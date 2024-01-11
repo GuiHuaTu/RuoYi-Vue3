@@ -74,7 +74,10 @@
          </el-table-column>
          <el-table-column label="数据类型" align="center" prop="tagDatatype">
          </el-table-column>
-         <el-table-column label="采集频率(ms)" align="center" prop="tagAcquisitionFrequency">
+         <el-table-column label="采集频率" align="center" prop="tagAcquisitionFrequency">
+            <template #default="scope">
+               <span>{{ scope.row.tagAcquisitionFrequency + ' ms'}}</span>
+            </template>
          </el-table-column>
          <el-table-column label="读写权限" align="center" prop="tagReadWrite">
             <template #default="scope">
@@ -414,7 +417,8 @@ async function plcCodeChange(value) {
 /** 查询设备驱动的点位数据类型列表 */
 async function getTagDataTypeList(driver) {
    if (driver) {
-      let datatype = "sys_tag_datatype_" + driver;
+      // let datatype = "sys_tag_datatype_" + driver;
+      let datatype = "sys_tag_datatype";
       var list = await proxy.useDictDynamics(datatype);
       sys_tag_datatype.value = list[datatype].value;
    }
