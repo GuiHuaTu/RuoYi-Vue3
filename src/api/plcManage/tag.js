@@ -9,6 +9,14 @@ export function listTag(query) {
   })
 }
 
+// 查询列表
+export function listTagNoPage(query) {
+  return request({
+    url: '/tag/listTagNoPage',
+    method: 'get',
+    params: query
+  })
+}
 // 查询详细
 export function getTag(tagId) {
   return request({

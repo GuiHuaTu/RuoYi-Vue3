@@ -2,14 +2,30 @@
 <template>
     <div class="app-container">
         <el-form :model="queryParams" ref="queryRef" v-show="showSearch" :inline="true" label-width="80px">
-            <el-form-item label="PLC代码" prop="plcCode" :rules="rules.plcCode">
+            <!-- <el-form-item label="PLC代码" prop="plcCode" :rules="rules.plcCode">
                 <el-input v-model="queryParams.plcCode" placeholder="请输入PLC代码" clearable style="width: 150px"
                     @keyup.enter="handleQuery" />
+            </el-form-item> -->
+            <el-form-item label="PLC名称" prop="plcCode" :rules="rules.plcCode">
+                <el-select v-model="queryParams.plcCode" placeholder="请选择PLC设备" clearable @keyup.enter="handleQuery"
+                    @change="plcCodeChange">
+                    <el-option v-for="item in plcOptions" :key="item.plcCode" :label="item.plcName"
+                        :value="item.plcCode"></el-option>
+                </el-select>
             </el-form-item>
-            <el-form-item label="Tag代码" prop="tagCode" :rules="rules.tagCode">
+
+            <!-- <el-form-item label="Tag代码" prop="tagCode" :rules="rules.tagCode">
                 <el-input v-model="queryParams.tagCode" placeholder="请输入Tag代码" clearable style="width: 150px"
                     @keyup.enter="handleQuery" />
+            </el-form-item> -->
+
+            <el-form-item label="Tag代码" prop="plcCode"  :rules="rules.tagCode">
+                <el-select v-model="queryParams.tagCode" placeholder="请选择Tag代码" clearable @keyup.enter="handleQuery">
+                    <el-option v-for="item in plcTagOptions" :key="item.tagCode" :label="item.tagName"
+                        :value="item.tagCode"></el-option>
+                </el-select>
             </el-form-item>
+
             <el-form-item label="检索名" prop="field" :rules="rules.field">
                 <el-input v-model="queryParams.field" placeholder="请输入检索名" clearable style="width: 150px"
                     @keyup.enter="handleQuery" />
@@ -127,6 +143,7 @@ import PlotFigure from "./js/PlotFigure.js";
 import Plotly from 'plotly.js/dist/plotly';
 // import Plotly from '@/utils/plotly'
 import { useEchartLine } from "./js/echartLinePlc.js";
+import { listTagNoPage, optionselectPlc } from "@/api/plcManage/tag";
 
 import { parseTime, getDate, getTime, getDateTime } from '@/utils/tool'
 
@@ -142,7 +159,8 @@ const multiple = ref(true);
 const total = ref(0);
 const title = ref("");
 const startEndShow = ref(false);
-
+const plcOptions = ref([]);
+const plcTagOptions = ref([]);
 
 const { proxy } = getCurrentInstance();
 const { sys_window_period_unit } = proxy.useDict("sys_window_period_unit");
@@ -162,8 +180,10 @@ const data = reactive({
     queryParams: {
         pageNum: 1,
         pageSize: 10,
-        plcCode: 'S1500',
-        tagCode: 'Tag_1',
+        // plcCode: 'S1500',
+        // tagCode: 'Tag_1',
+        plcCode: undefined,
+        tagCode: undefined,
         field: 'tag_value',
         aggregateQuery: false,
         aggregateFun: 'last',
@@ -234,6 +254,23 @@ const configPlotLy = ref({
 // watch(() => dataPlotLy, value => redrawDataValue(value))
 // watch(() => layoutPlotLy, value => redrawLayoutValue(value))
 
+/** 查询PLC列表 */
+function getPlcList() {
+    optionselectPlc().then(response => {
+        plcOptions.value = response.data;
+    });
+}
+
+/** plc选择 */
+async function plcCodeChange(value) {
+    await getTagCodeList(value);
+}
+/** 获取PLC的点位 */
+async function getTagCodeList(value) {
+    await listTagNoPage({ plcCode: value }).then(response => {
+        plcTagOptions.value = response.data;
+    });
+}
 
 /** 查询列表 */
 function getList() {
@@ -347,14 +384,13 @@ function handleQuery() {
     } else {
         rules.value['aggregateQuery'][0].required = false;
     }
-
     proxy.$refs["queryRef"].validate(valid => {
         if (valid) {
             queryParams.value.pageNum = 1;
             getList();
         }
         else {
-            proxy.$modal.msgError("查询表单校验错误!");
+            // proxy.$modal.msgError("查询表单校验错误!");
         }
     });
 }
@@ -368,7 +404,7 @@ function resetQuery() {
 
 
 const timeFlush = reactive({
-    rangeFlush: 15000,//定义定时器间隔时间 默认是15s
+    rangeFlush: 1000,//定义定时器间隔时间 
 })
 function dateRangeChange(value) {
     if (value == 'customRange') {
@@ -407,4 +443,7 @@ onUnmounted(() => {
         state.timeInter = null
     }
 })
+
+
+getPlcList();
 </script>
