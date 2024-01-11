@@ -241,6 +241,8 @@ const { sys_read_write } = proxy.useDict("sys_read_write");
 const sys_tag_group = ref([]);
 const sys_tag_datatype = ref([]);
 
+const optionNull = ref({ value: [] });
+
 const isZsNumberValidate = inject('isZsNumberValidate');
 
 const tagList = ref([]);
@@ -423,7 +425,7 @@ async function getTagDataTypeList(driver) {
       sys_tag_datatype.value = list[datatype].value;
    }
    else {
-      sys_tag_datatype = ref([]);
+      sys_tag_datatype.value  = toRefs(optionNull.value);
    }
 }
 /** 查询点位数据组列表 */

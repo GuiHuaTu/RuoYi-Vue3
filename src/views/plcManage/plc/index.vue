@@ -46,12 +46,12 @@
             <el-button type="warning" plain icon="Download" @click="handleExport"
                v-hasPermi="['plcManage:plc:export']">导出</el-button>
          </el-col>
-         
+
          <el-col :span="1.5">
             <el-button type="warning" plain icon="Refresh" @click="handleAcquisition"
                v-hasPermi="['plcManage:plc:acquisition']">刷新采集作业</el-button>
          </el-col>
-         
+
          <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
       </el-row>
 
@@ -114,6 +114,16 @@
                         </el-select>
                      </el-form-item>
 
+                     <el-form-item label="采集驱动" prop="plcAcquisitionDriver">
+                        <el-select v-model="form.plcAcquisitionDriver" placeholder="采集驱动" clearable
+                           @change="plcAcquisitionDriverChange">
+                           <el-option v-for="item in sys_acquisition_driver" :key="item.value" :label="item.label"
+                              :value="item.value" :disabled="item.disabled" />
+                        </el-select>
+                     </el-form-item>
+                  </el-row>
+
+                  <el-row>
                      <el-form-item label="型号/协议" prop="plcModelProtocol">
                         <el-select v-model="form.plcModelProtocol" placeholder="型号/协议" clearable
                            @change="plcModelProtocolChange">
@@ -121,9 +131,6 @@
                               :value="item.value" />
                         </el-select>
                      </el-form-item>
-                  </el-row>
-
-                  <el-row>
                      <el-form-item label="网络类型" prop="plcNetworkType">
                         <el-select v-model="form.plcNetworkType" placeholder="网络类型" clearable
                            @change="plcNetworkTypeChange">
@@ -131,19 +138,12 @@
                               :value="item.value" :disabled="item.disabled" />
                         </el-select>
                      </el-form-item>
-                     <el-form-item label="推送频率(ms)" prop="plcSendFrequ">
-                        <el-input-number v-model.number="form.plcSendFrequ" placeholder="" />
-                     </el-form-item>
-                  </el-row>
+                     <el-row>
+                        <el-form-item label="推送频率(ms)" prop="plcSendFrequ">
+                           <el-input-number v-model.number="form.plcSendFrequ" placeholder="" />
+                        </el-form-item>
+                     </el-row>
 
-                  <el-row>
-                     <el-form-item label="采集驱动" prop="plcAcquisitionDriver">
-                        <el-select v-model="form.plcAcquisitionDriver" placeholder="采集驱动" clearable
-                           @change="plcNetworkTypeChange">
-                           <el-option v-for="item in sys_acquisition_driver" :key="item.value" :label="item.label"
-                              :value="item.value" :disabled="item.disabled" />
-                        </el-select>
-                     </el-form-item>
                      <el-form-item label="状态" prop="status">
                         <el-radio-group v-model="form.status">
                            <el-radio v-for="item in sys_normal_disable" :key="item.value" :label="item.value">{{ item.label
@@ -315,6 +315,8 @@ const { sys_data_format } = proxy.useDict("sys_data_format");
 const sys_model_protocol = ref([]);
 const sys_acquisition_driver = ref([]);
 
+const optionNull = ref({ value: [] });
+
 const isZsNumberValidate = inject('isZsNumberValidate');
 const IPValidator = inject('IPValidator');
 
@@ -479,6 +481,11 @@ function handleAdd() {
    open.value = true;
    title.value = "添加PLC";
    actionAdd.value = true;
+
+   plcTypeChange();
+   plcAcquisitionDriverChange();
+   plcModelProtocolChange();
+   plcNetworkTypeChange();
 }
 /** 多选框选中数据 */
 function handleSelectionChange(selection) {
@@ -498,6 +505,7 @@ function handleUpdate(row) {
       actionAdd.value = false;
 
       plcTypeChange(form.value.plcType);
+      plcAcquisitionDriverChange(form.value.plcAcquisitionDriver);
       plcModelProtocolChange(form.value.plcModelProtocol);
       plcNetworkTypeChange(form.value.plcNetworkType);
    });
@@ -551,17 +559,21 @@ function handleExport() {
 }
 
 /** 重启采集 */
-function handleAcquisition(){
+function handleAcquisition() {
    acquisitionStart();
 }
 
-/** plc类型选择 */
+/** plc类型选择 获取支持的驱动*/
 async function plcTypeChange(value) {
-   if (actionAdd.value) form.value.plcModelProtocol = "";
+   if (actionAdd.value) {
+      form.value.plcModelProtocol = "";
+      form.value.plcAcquisitionDriver = "";
+      sys_model_protocol.value = toRefs(optionNull.value);
+   }
    if (value) {
-      let dictTypeActive = value + "_model_protocol";
-      var list = await proxy.useDictDynamics(dictTypeActive);
-      sys_model_protocol.value = list[dictTypeActive].value;
+      // let dictTypeActive = value + "_model_protocol";
+      // var list = await proxy.useDictDynamics(dictTypeActive);
+      // sys_model_protocol.value = list[dictTypeActive].value;
 
       let driver = "sys_" + value + "_driver";
       var list = await proxy.useDictDynamics(driver);
@@ -590,13 +602,36 @@ async function plcTypeChange(value) {
          }
       }
    } else {
-      sys_model_protocol = ref([]);
-      sys_acquisition_driver = ref([]);
+      // sys_model_protocol.value  = toRefs(optionNull.value);
+      sys_acquisition_driver.value = toRefs(optionNull.value);
    }
 }
 
-/** plc型号/协议选择 */
-async function plcModelProtocolChange(value) { 
+
+/** plc采集驱动选择 获取驱动支持的设备类型或协议*/
+async function plcAcquisitionDriverChange(value) {
+   if (actionAdd.value) {
+      form.value.plcModelProtocol = "";
+      sys_network_type.value = toRefs(optionNull.value);
+   }
+   if (value) {
+      
+      let configKey = form.value.plcType + "_model_protocol_" + value;
+      var list = await proxy.useDictDynamics(configKey);
+
+      if (list) {
+         sys_model_protocol.value = list[configKey].value;
+      }
+      else {
+         sys_model_protocol.value = toRefs(optionNull.value);
+      }
+   }
+   else {
+      sys_model_protocol.value = toRefs(optionNull.value);
+   }
+}
+/** plc型号/协议选择 选择后获取协议支持的网络类型*/
+async function plcModelProtocolChange(value) {
    if (value) {
       let configKey = "sys." + value + ".networkType";
       var config = await getSingleConfig(configKey);
@@ -612,7 +647,7 @@ async function plcModelProtocolChange(value) {
    }
 }
 
-/** plc网络类型选择 */
+/** plc网络类型选择 控制对应属性的显示*/
 function plcNetworkTypeChange(value) {
    if (value == '0') {//网络
       cardIpConfigShow.value = true;
