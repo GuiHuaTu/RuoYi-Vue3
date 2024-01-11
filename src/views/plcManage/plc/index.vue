@@ -560,7 +560,7 @@ function handleExport() {
 
 /** 重启采集 */
 function handleAcquisition() {
-   acquisitionStart();
+   acquisitionStart(ids.value[0] );
 }
 
 /** plc类型选择 获取支持的驱动*/
