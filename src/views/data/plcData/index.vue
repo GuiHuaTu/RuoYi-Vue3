@@ -19,7 +19,7 @@
                     @keyup.enter="handleQuery" />
             </el-form-item> -->
 
-            <el-form-item label="Tag代码" prop="plcCode"  :rules="rules.tagCode">
+            <el-form-item label="Tag代码" prop="plcCode" :rules="rules.tagCode">
                 <el-select v-model="queryParams.tagCode" placeholder="请选择Tag代码" clearable @keyup.enter="handleQuery">
                     <el-option v-for="item in plcTagOptions" :key="item.tagCode" :label="item.tagName"
                         :value="item.tagCode"></el-option>
@@ -82,15 +82,15 @@
 
             </el-row>
         </el-form>
-
-        <div class="demo-collapse">
+        <!-- 
+        <div>
             <el-collapse v-model="activeNames">
                 <el-collapse-item name="1">
                     <template #title>PlotLyMarkerLine<el-icon class="header-icon">
                             <info-filled />
                         </el-icon>
                     </template>
-                    <!-- <div>
+                    <div>
                         <PlotFigure :options="{
                             x: {
                                 label: '时间'
@@ -104,17 +104,67 @@
                                 Plot.lineY(lineYList, { x: '_time', y: '_value' }),
                             ],
                         }" />
-                    </div> -->
+                    </div> 
 
                     <div id="plotLyId"></div>
 
                 </el-collapse-item>
-                <!-- <el-collapse-item title="EchartMarkerLine" name="2">
+                <el-collapse-item title="EchartMarkerLine" name="2">
                     <div id="mainLine">
                     </div>
-                </el-collapse-item> -->
+                </el-collapse-item>  
             </el-collapse>
 
+        </div> -->
+
+        <div>
+            <el-tabs  v-model="activeTabsName"  type="border-card" @tab-click="onTabClick">
+                <el-tab-pane label="PlotLy折线图" name="plotLyShow">
+                    <div id="plotLyId"></div>
+                </el-tab-pane>
+                <el-tab-pane label="Table表格" name="tableShow">
+
+                    <el-table :data="lineYListPage" @selection-change="handleSelectionChange">
+                        <!-- <el-table-column type="selection" width="55" align="center" /> -->
+                        <el-table-column type="index" label="序号" width="50" :index="indexMethod">
+                        </el-table-column>
+                        <el-table-column label="设备代码" align="center" prop="plc_code" />
+                        <el-table-column label="点位代码" align="center" prop="tag_code" :show-overflow-tooltip="true" />
+                        <el-table-column label="点位值" align="center" prop="_value" :show-overflow-tooltip="true" />
+
+                        <el-table-column label="采集时间" align="center" prop="_time" width="240">
+                            <template #default="scope">
+                                <span>{{ scope.row._time }}</span>
+                            </template>
+                        </el-table-column>
+                        <el-table-column label="起始时间" align="center" prop="_start" width="240">
+                            <template #default="scope">
+                                <span>{{ scope.row._start }}</span>
+                            </template>
+                        </el-table-column>
+                        <el-table-column label="结束时间" align="center" prop="_stop" width="240">
+                            <template #default="scope">
+                                <span>{{ scope.row._stop }}</span>
+                            </template>
+                        </el-table-column>
+                        <!-- <el-table-column label="操作" align="center" width="160" class-name="small-padding fixed-width">
+                                <template #default="scope">
+                                <el-button link type="primary" icon="Edit" @click="handleUpdate(scope.row)"
+                                    v-hasPermi="['system:dict:edit']">修改</el-button>
+                                <el-button link type="primary" icon="Delete" @click="handleDelete(scope.row)"
+                                    v-hasPermi="['system:dict:remove']">删除</el-button>
+                                </template>
+                            </el-table-column> 
+                            -->
+                    </el-table>
+
+
+                    <pagination v-show="total > 0" :total="total" :pageSizes="[50, 100, 150, 200, 300, 400, 500, 1000]"
+                        v-model:page="queryParams.pageNum" v-model:limit="queryParams.pageSize"
+                        @pagination="getTablePage" />
+
+                </el-tab-pane>
+            </el-tabs>
         </div>
     </div>
 </template>
@@ -150,6 +200,7 @@ import { parseTime, getDate, getTime, getDateTime } from '@/utils/tool'
 import { queryByFluxQuery } from "@/api/influxDb/influx";
 
 const lineYList = ref([]);
+const lineYListPage = ref([]);
 const open = ref(false);
 const loading = ref(true);
 const showSearch = ref(true);
@@ -179,7 +230,7 @@ const data = reactive({
     },
     queryParams: {
         pageNum: 1,
-        pageSize: 10,
+        pageSize: 50,
         // plcCode: 'S1500',
         // tagCode: 'Tag_1',
         plcCode: undefined,
@@ -214,7 +265,7 @@ const data = reactive({
 const { queryParams, form, fluxQuery, rules } = toRefs(data);
 
 const activeNames = ref(['1', '2'])
-
+const activeTabsName = ref("plotLyShow")
 
 const dataPlotLy = ref([{
     x: [],
@@ -254,6 +305,10 @@ const configPlotLy = ref({
 // watch(() => dataPlotLy, value => redrawDataValue(value))
 // watch(() => layoutPlotLy, value => redrawLayoutValue(value))
 
+
+function indexMethod(index) {
+    return index + 1;
+}
 /** 查询PLC列表 */
 function getPlcList() {
     optionselectPlc().then(response => {
@@ -270,6 +325,13 @@ async function getTagCodeList(value) {
     await listTagNoPage({ plcCode: value }).then(response => {
         plcTagOptions.value = response.data;
     });
+}
+/** 选项卡点击事件 */
+function onTabClick(tab, event) {
+    console.log(tab, event);
+    if (tab.name == 'tableShow') {
+        getTablePage() ;
+    }  
 }
 
 /** 查询列表 */
@@ -336,12 +398,19 @@ function getList() {
             lineYList.value = response.data;
             total.value = response.total;
             loading.value = false;
+            getTablePage();
             PlotlyShow();
         } else {
             proxy.$modal.msgError(response.msg);
         }
     });
 }
+/** 前端分页数据显示 */
+function getTablePage() {
+    var pageDatas = proxy.getTableData(queryParams.value.pageNum, queryParams.value.pageSize, lineYList.value);
+    lineYListPage.value = pageDatas.data;
+}
+
 function PlotlyShow() {
     console.log('-----------------')
     if (lineYList.value && lineYList.value.length > 0) {
@@ -385,7 +454,6 @@ function handleQuery() {
     }
     proxy.$refs["queryRef"].validate(valid => {
         if (valid) {
-            queryParams.value.pageNum = 1;
             getList();
         }
         else {
@@ -443,6 +511,12 @@ onUnmounted(() => {
     }
 })
 
+/** 多选框选中数据 */
+function handleSelectionChange(selection) {
+    ids.value = selection.map(item => item.dictId);
+    single.value = selection.length != 1;
+    multiple.value = !selection.length;
+}
 
 getPlcList();
 </script>

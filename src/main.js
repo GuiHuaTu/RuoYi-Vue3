@@ -30,7 +30,7 @@ import './permission' // permission control
 
 import { useDict ,useDictDynamics} from '@/utils/dict'
 import { parseTime, getDate,getTime,getDateTime,resetForm, addDateRange, handleTree, selectDictLabel, selectDictLabels 
-    ,validateIP
+    ,validateIP ,getTableData
 } from '@/utils/tool'
 // 引入提示框，标题，直角坐标系，数据集，内置数据转换器组件，组件后缀都为 Component
 import {
@@ -92,6 +92,8 @@ app.config.globalProperties.addDateRange = addDateRange
 app.config.globalProperties.selectDictLabel = selectDictLabel
 app.config.globalProperties.selectDictLabels = selectDictLabels
 app.config.globalProperties.validateIP = validateIP
+app.config.globalProperties.getTableData = getTableData
+
 
 // 全局组件挂载
 app.component('DictTag', DictTag)
