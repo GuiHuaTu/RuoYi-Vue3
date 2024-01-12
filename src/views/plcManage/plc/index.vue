@@ -65,6 +65,13 @@
                <dict-tag :options="sys_plc_type" :value="scope.row.plcType" />
             </template>
          </el-table-column>
+         <el-table-column label="型号/协议" align="center" prop="plcModelProtocol" :show-overflow-tooltip="true" />
+         <el-table-column label="网络类型" align="center" prop="plcNetworkType" :show-overflow-tooltip="true" >
+            <template #default="scope">
+               {{ typeDictFormat(sys_network_type,scope.row.plcNetworkType) }} 
+            </template>
+         </el-table-column>
+         <el-table-column label="采集驱动" align="center" prop="plcAcquisitionDriver" :show-overflow-tooltip="true" />
          <el-table-column label="IP" align="center" prop="plcIp" :show-overflow-tooltip="true" />
          <el-table-column label="端口" align="center" prop="plcPort" :show-overflow-tooltip="true" />
          <el-table-column label="状态" align="center" prop="status">
@@ -665,6 +672,12 @@ function plcNetworkTypeChange(value) {
       }
    }
 }
+
+/** 类型字典翻译 */
+function typeDictFormat(dict, value) {
+  return proxy.selectDictLabel(dict, value);
+}
+
 
 // 加载设备串口
 function getComPortNames() {
