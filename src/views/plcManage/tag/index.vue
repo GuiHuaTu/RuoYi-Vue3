@@ -130,12 +130,12 @@
                </el-form-item>
 
                <el-form-item label="点位代码" prop="tagCode">
-                  <el-input v-model="form.tagCode" placeholder="请输入代码" :disabled="tagCodeIsDisabled" />
+                  <el-input v-model="form.tagCode" placeholder="请输入代码" :disabled="tagCodeIsDisabled" @input="tagCodeInput"/>
                </el-form-item>
             </el-row>
             <el-row>
                <el-form-item label="数据类型" prop="tagDatatype">
-                  <el-select v-model="form.tagDatatype" placeholder="请选择类型" @change="changeSelectDataType($event)">
+                  <el-select v-model="form.tagDatatype" placeholder="请选择类型" @change="tagDatatypeChange">
                      <el-option v-for="item in sys_tag_datatype" :key="item.value" :label="item.label" :value="item.value">
                         <span style="float: left">{{ item.label }}</span>
                         <span style=" float: right; color: var(--el-text-color-secondary); font-size: 10px; ">{{
@@ -414,6 +414,15 @@ function getPlcList() {
 /** plc选择 */
 async function plcCodeChange(value) {
    await getTagDataTypeList(value.plcAcquisitionDriver);
+}
+
+/** 数据点位数据类型选择 */
+async function tagDatatypeChange(value){
+
+}
+
+function tagCodeInput(value){
+   form.value.tagName = value;
 }
 
 /** 查询设备驱动的点位数据类型列表 */
