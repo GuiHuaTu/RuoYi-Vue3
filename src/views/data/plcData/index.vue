@@ -109,10 +109,10 @@
                     <div id="plotLyId"></div>
 
                 </el-collapse-item>
-                <el-collapse-item title="EchartMarkerLine" name="2">
+                <!-- <el-collapse-item title="EchartMarkerLine" name="2">
                     <div id="mainLine">
                     </div>
-                </el-collapse-item>
+                </el-collapse-item> -->
             </el-collapse>
 
         </div>
@@ -359,13 +359,12 @@ function PlotlyShow() {
         let ctx = document.getElementById('plotLyId');
         Plotly.react(ctx, dataPlotLy.value, layoutPlotLy.value, configPlotLy.value);
 
-
-        var dataLine = [];
-
-        for (var i = 0; i < lineYList.value.length; i++) {
-            dataLine.push({ name: response.data[i]._time, value: [response.data[i]._time, response.data[i]._value] });
-        }
-        useEchartLine('mainLine', dataLine)
+        // //echart 方式；
+        // var dataLine = [];
+        // for (var i = 0; i < lineYList.value.length; i++) {
+        //     dataLine.push({ name: lineYList.value[i]._time, value: [lineYList.value[i]._time, lineYList.value[i]._value] });
+        // }
+        // useEchartLine('mainLine', dataLine)
     }
 
 }
