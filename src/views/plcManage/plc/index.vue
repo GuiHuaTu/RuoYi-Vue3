@@ -49,7 +49,7 @@
 
          <el-col :span="1.5">
             <el-button type="warning" plain icon="Refresh" @click="handleAcquisition"
-               v-hasPermi="['plcManage:plc:acquisition']">刷新采集作业</el-button>
+               v-hasPermi="['plcManage:plc:acquisition']">开启采集任务</el-button>
          </el-col>
 
          <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
@@ -565,9 +565,15 @@ function handleExport() {
    }, `plc_${new Date().getTime()}.xls`);
 }
 
-/** 重启采集 */
+/** 开启/重启采集 */
 function handleAcquisition() {
-   acquisitionStart(ids.value[0] );
+   acquisitionStart(ids.value[0] ).then(response => {
+      if (response && response.code == 200) { 
+         proxy.$modal.msgSuccess("启动成功！");
+      }else{
+      proxy.$modal.msgError("任务启动失败!" + response.msg);
+      }
+   });
 }
 
 /** plc类型选择 获取支持的驱动*/

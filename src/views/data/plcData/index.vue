@@ -129,7 +129,7 @@
                         <el-table-column type="index" label="序号" width="50" :index="indexMethod">
                         </el-table-column>
                         <el-table-column label="设备代码" align="center" prop="plc_code" />
-                        <el-table-column label="点位代码" align="center" prop="tag_code" :show-overflow-tooltip="true" />
+                        <el-table-column label="点位代码" align="center" prop="tag_code" :show-overflow-tooltip="true" /> 
                         <el-table-column label="点位值" align="center" prop="_value" :show-overflow-tooltip="true" />
 
                         <el-table-column label="采集时间" align="center" prop="_time" width="240">
