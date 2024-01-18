@@ -60,6 +60,15 @@
       <el-table v-loading="loading" :data="tagList" @selection-change="handleSelectionChange">
          <el-table-column type="selection" width="55" align="center">
          </el-table-column>
+         <el-table-column label="采集状态" align="center" prop="tagReadStatus" >
+            <template #default="scope">
+               <div >
+               <el-button  v-if="(scope.row.tagReadStatus == 'Y')" class="buttonMin" type="success" :icon="Check" size="small" circle  />
+               <el-button  v-else-if="(scope.row.tagReadStatus == 'N')" class="buttonMin" type="danger" size="small" circle  />
+               <el-button  v-else type="info" class="buttonMin" size="small" circle  />
+               </div>
+            </template>
+         </el-table-column>
          <el-table-column label="ID" align="center" prop="tagId">
          </el-table-column>
          <el-table-column label="点位组" align="center" prop="tagGroup" :show-overflow-tooltip="true">

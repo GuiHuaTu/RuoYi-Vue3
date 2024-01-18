@@ -47,26 +47,21 @@
                v-hasPermi="['plcManage:plc:export']">导出</el-button>
          </el-col>
          <el-col :span="1.5">
-            <el-button type="warning" plain icon="Refresh" @click="handleAcquisitionJobAdd"
+            <el-button type="primary" plain icon="Plus" :disabled="single" @click="handleAcquisitionJobAdd"
                v-hasPermi="['plcManage:plc:acquisitionJobAdd']">添加采集任务</el-button>
          </el-col>
 
          <el-col :span="1.5">
-            <el-button type="warning" plain icon="Refresh" @click="handleAcquisitionJobStart"
+            <el-button type="success" plain icon="Open" :disabled="single" @click="handleAcquisitionJobStart"
                v-hasPermi="['plcManage:plc:acquisitionJobStart']">开启采集任务</el-button>
          </el-col>
          <el-col :span="1.5">
-            <el-button type="warning" plain icon="Refresh" @click="handleAcquisitionJobStop"
+            <el-button type="warning" plain icon="SwitchButton" :disabled="single" @click="handleAcquisitionJobStop"
                v-hasPermi="['plcManage:plc:acquisitionJobStop']">暂停采集任务</el-button>
          </el-col>
-
+ 
          <el-col :span="1.5">
-            <el-button type="warning" plain icon="Refresh" @click="handleAcquisitionJobStop"
-               v-hasPermi="['plcManage:plc:acquisitionJobStop']">暂停采集任务</el-button>
-         </el-col>
-
-         <el-col :span="1.5">
-            <el-button type="warning" plain icon="Refresh" @click="handleDeleteDataJob"
+            <el-button type="success" plain icon="Operation" :disabled="single" @click="handleDeleteDataJob"
                v-hasPermi="['plcManage:plc:deleteDataJob']">历史数据定期清理配置</el-button>
          </el-col>
 
@@ -76,6 +71,15 @@
 
       <el-table v-loading="loading" :data="typeList" @selection-change="handleSelectionChange">
          <el-table-column type="selection" width="55" align="center" />
+         <el-table-column label="连接状态" align="center" prop="plcConnectStatus" >
+            <template #default="scope">
+               <div >
+               <el-button  v-if="(scope.row.plcConnectStatus == 'Y')" class="buttonMin" type="success" :icon="Check" size="small" circle  />
+               <el-button  v-else-if="(scope.row.plcConnectStatus == 'N')" class="buttonMin" type="danger" size="small" circle  />
+               <el-button  v-else type="info" class="buttonMin" size="small" circle  />
+               </div>
+            </template>
+         </el-table-column>
          <el-table-column label="PLC编号" align="center" prop="plcId" />
          <el-table-column label="PLC名称" align="center" prop="plcName" :show-overflow-tooltip="true" />
          <el-table-column label="PLC编码" align="center" prop="plcCode" :show-overflow-tooltip="true" />
@@ -325,7 +329,7 @@
          </template>
       </el-dialog>
 
-      <el-dialog :title="title" v-model="openDeleteDataJob" width="780px" append-to-body>
+      <el-dialog :title="title" v-model="openDeleteDataJob" width="480px" append-to-body>
          <el-form ref="deleteDataJobRef" :model="formDeleteDataJob" :rules="rules" label-width="120px">
             <!-- <el-form-item label="PLC名称" prop="plcCode" >
                <el-select v-model="formDeleteDataJob.plcCode" placeholder="请选择PLC设备" clearable>
@@ -358,6 +362,13 @@
       </el-dialog>
    </div>
 </template>
+<style scoped> 
+/* 样式这里要设置长宽，不然显示不出来 */
+.buttonMin {
+    width: 15px;
+    height: 15px;
+}
+</style >
  
 <script setup name="Plc">
 import { optionselectPlc } from "@/api/plcManage/tag";
@@ -501,7 +512,7 @@ const data = reactive({
    },
 });
 
-const { queryParams, form, rules } = toRefs(data);
+const { queryParams, form, rules ,formDeleteDataJob } = toRefs(data);
 
 /** 查询PLC列表 */
 function getPlcList() {
@@ -568,7 +579,7 @@ function handleAdd() {
    plcNetworkTypeChange();
 }
 /** 定期数据清理按钮操作 */
-function openDeleteDataJob(row) {
+function handleDeleteDataJob(row) {
    const plcId = row.plcId || ids.value;
    getPlc(plcId).then(response => {
       formDeleteDataJob.value = response.data;
@@ -654,7 +665,7 @@ function submitFormDeleteDataJob() {
             formDeleteDataJob.value.plcDeleteBeforeDays,
             formDeleteDataJob.value.plcDeletePeriodDays
          ).then(response => {
-            proxy.$modal.msgSuccess("操作成功");
+            proxy.$modal.msgSuccess(response.msg);
             openDeleteDataJob.value = false;
          });
       }
@@ -673,7 +684,7 @@ function submitFormDeleteDataJob() {
 function cancelDeleteDataJob() {
    deleteDataJobStop(formDeleteDataJob.value.plcId
    ).then(response => {
-      proxy.$modal.msgSuccess("操作成功");
+      proxy.$modal.msgSuccess(response.msg);
       openDeleteDataJob.value = false;
    });
 }
@@ -692,7 +703,7 @@ function cancelDeleteDataJob() {
 function handleAcquisitionJobAdd() {
    acquisitionJobAdd(ids.value[0]).then(response => {
       if (response && response.code == 200) {
-         proxy.$modal.msgSuccess("添加成功！");
+         proxy.$modal.msgSuccess(response.msg);
       } else {
          proxy.$modal.msgError("任务添加失败!" + response.msg);
       }
@@ -702,7 +713,7 @@ function handleAcquisitionJobAdd() {
 function handleAcquisitionJobStart() {
    acquisitionJobStart(ids.value[0]).then(response => {
       if (response && response.code == 200) {
-         proxy.$modal.msgSuccess("开启成功！");
+         proxy.$modal.msgSuccess(response.msg);
       } else {
          proxy.$modal.msgError("任务开启失败!" + response.msg);
       }
@@ -712,7 +723,7 @@ function handleAcquisitionJobStart() {
 function handleAcquisitionJobStop() {
    acquisitionJobStop(ids.value[0]).then(response => {
       if (response && response.code == 200) {
-         proxy.$modal.msgSuccess("开启成功！");
+         proxy.$modal.msgSuccess(response.msg);
       } else {
          proxy.$modal.msgError("任务开启失败!" + response.msg);
       }
