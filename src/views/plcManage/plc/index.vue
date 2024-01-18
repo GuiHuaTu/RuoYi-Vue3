@@ -46,10 +46,14 @@
             <el-button type="warning" plain icon="Download" @click="handleExport"
                v-hasPermi="['plcManage:plc:export']">导出</el-button>
          </el-col>
+         <el-col :span="1.5">
+            <el-button type="warning" plain icon="Refresh" @click="handleAcquisitionJobAdd"
+               v-hasPermi="['plcManage:plc:acquisitionJobAdd']">添加采集任务</el-button>
+         </el-col>
 
          <el-col :span="1.5">
-            <el-button type="warning" plain icon="Refresh" @click="handleAcquisition"
-               v-hasPermi="['plcManage:plc:acquisition']">开启采集任务</el-button>
+            <el-button type="warning" plain icon="Refresh" @click="handleAcquisitionJobStart"
+               v-hasPermi="['plcManage:plc:acquisitionJobStart']">开启采集任务</el-button>
          </el-col>
 
          <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
@@ -309,7 +313,8 @@
 </template>
  
 <script setup name="Plc">
-import { listPlc, getPlc, delPlc, addPlc, updatePlc, getPortNames, getConfig, acquisitionStart } from "@/api/plcManage/plc";
+import { listPlc, getPlc, delPlc, addPlc, updatePlc, getPortNames, getConfig,
+   acquisitionJobAdd,acquisitionJobStart } from "@/api/plcManage/plc";
 
 const { proxy } = getCurrentInstance();
 const { sys_normal_disable } = proxy.useDict("sys_normal_disable");
@@ -565,16 +570,37 @@ function handleExport() {
    }, `plc_${new Date().getTime()}.xls`);
 }
 
-/** 开启/重启采集 */
-function handleAcquisition() {
-   acquisitionStart(ids.value[0] ).then(response => {
+// /** 开启/重启采集 */
+// function handleAcquisition() {
+//    acquisitionStart(ids.value[0] ).then(response => {
+//       if (response && response.code == 200) { 
+//          proxy.$modal.msgSuccess("启动成功！");
+//       }else{
+//       proxy.$modal.msgError("任务启动失败!" + response.msg);
+//       }
+//    });
+// }
+/** 添加采集任务 */
+function handleAcquisitionJobAdd() {
+   acquisitionJobAdd(ids.value[0] ).then(response => {
       if (response && response.code == 200) { 
-         proxy.$modal.msgSuccess("启动成功！");
+         proxy.$modal.msgSuccess("添加成功！");
       }else{
-      proxy.$modal.msgError("任务启动失败!" + response.msg);
+      proxy.$modal.msgError("任务添加失败!" + response.msg);
       }
    });
 }
+/** 开始采集任务 */
+function handleAcquisitionJobStart() {
+   acquisitionJobStart(ids.value[0] ).then(response => {
+      if (response && response.code == 200) { 
+         proxy.$modal.msgSuccess("开启成功！");
+      }else{
+      proxy.$modal.msgError("任务开启失败!" + response.msg);
+      }
+   });
+}
+
 
 /** plc类型选择 获取支持的驱动*/
 async function plcTypeChange(value) {

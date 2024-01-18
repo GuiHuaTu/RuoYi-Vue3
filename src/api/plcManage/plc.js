@@ -59,10 +59,29 @@ export function getConfig(key) {
   })
 }
 
-// 获取系统配置列表
-export function acquisitionStart(data) {
+// // 
+// export function acquisitionStart(data) {
+//   return request({
+//     url: '/plc/acquisitionStart',
+//     method: 'post',
+//     data: data
+//   })
+// }
+
+// 添加采集任务
+export function acquisitionJobAdd(data) {
   return request({
-    url: '/plc/acquisitionStart',
+    url: '/plc/acquisitionJobAdd',
+    method: 'post',
+    data: data
+  })
+}
+
+
+// 开启采集任务
+export function acquisitionJobStart(data) {
+  return request({
+    url: '/plc/acquisitionJobStart',
     method: 'post',
     data: data
   })
