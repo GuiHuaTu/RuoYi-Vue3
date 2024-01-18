@@ -55,6 +55,21 @@
             <el-button type="warning" plain icon="Refresh" @click="handleAcquisitionJobStart"
                v-hasPermi="['plcManage:plc:acquisitionJobStart']">开启采集任务</el-button>
          </el-col>
+         <el-col :span="1.5">
+            <el-button type="warning" plain icon="Refresh" @click="handleAcquisitionJobStop"
+               v-hasPermi="['plcManage:plc:acquisitionJobStop']">暂停采集任务</el-button>
+         </el-col>
+
+         <el-col :span="1.5">
+            <el-button type="warning" plain icon="Refresh" @click="handleAcquisitionJobStop"
+               v-hasPermi="['plcManage:plc:acquisitionJobStop']">暂停采集任务</el-button>
+         </el-col>
+
+         <el-col :span="1.5">
+            <el-button type="warning" plain icon="Refresh" @click="handleDeleteDataJob"
+               v-hasPermi="['plcManage:plc:deleteDataJob']">历史数据定期清理配置</el-button>
+         </el-col>
+
 
          <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
       </el-row>
@@ -70,9 +85,9 @@
             </template>
          </el-table-column>
          <el-table-column label="型号/协议" align="center" prop="plcModelProtocol" :show-overflow-tooltip="true" />
-         <el-table-column label="网络类型" align="center" prop="plcNetworkType" :show-overflow-tooltip="true" >
+         <el-table-column label="网络类型" align="center" prop="plcNetworkType" :show-overflow-tooltip="true">
             <template #default="scope">
-               {{ typeDictFormat(sys_network_type,scope.row.plcNetworkType) }} 
+               {{ typeDictFormat(sys_network_type, scope.row.plcNetworkType) }}
             </template>
          </el-table-column>
          <el-table-column label="采集驱动" align="center" prop="plcAcquisitionDriver" :show-overflow-tooltip="true" />
@@ -309,12 +324,48 @@
             </div>
          </template>
       </el-dialog>
+
+      <el-dialog :title="title" v-model="openDeleteDataJob" width="780px" append-to-body>
+         <el-form ref="deleteDataJobRef" :model="formDeleteDataJob" :rules="rules" label-width="120px">
+            <!-- <el-form-item label="PLC名称" prop="plcCode" >
+               <el-select v-model="formDeleteDataJob.plcCode" placeholder="请选择PLC设备" clearable>
+                  <el-option v-for="item in plcOptions" :key="item.plcCode" :label="item.plcName"
+                     :value="item.plcCode"></el-option>
+               </el-select>
+            </el-form-item> -->
+
+            <el-form-item label="PLC名称" prop="plcName">
+               <el-input v-model="formDeleteDataJob.plcName" placeholder="请输入PLC名称" :disabled="true" />
+            </el-form-item>
+            <el-form-item label="PLC代码" prop="plcCode">
+               <el-input v-model="formDeleteDataJob.plcCode" placeholder="请输入PLC代码" :disabled="true" />
+            </el-form-item>
+
+            <el-form-item label="多少天之前" prop="plcDeleteBeforeDays">
+               <el-input-number v-model="formDeleteDataJob.plcDeleteBeforeDays" />
+            </el-form-item>
+            <el-form-item label="多少天的数据" prop="plcDeletePeriodDays">
+               <el-input-number v-model="formDeleteDataJob.plcDeletePeriodDays" />
+            </el-form-item>
+         </el-form>
+
+         <template #footer>
+            <div class="dialog-footer">
+               <el-button type="primary" @click="submitFormDeleteDataJob">保 存</el-button>
+               <el-button @click="cancelDeleteDataJob">暂 停</el-button>
+            </div>
+         </template>
+      </el-dialog>
    </div>
 </template>
  
 <script setup name="Plc">
-import { listPlc, getPlc, delPlc, addPlc, updatePlc, getPortNames, getConfig,
-   acquisitionJobAdd,acquisitionJobStart } from "@/api/plcManage/plc";
+import { optionselectPlc } from "@/api/plcManage/tag";
+import {
+   listPlc, getPlc, delPlc, addPlc, updatePlc, getPortNames, getConfig,
+   acquisitionJobAdd, acquisitionJobStart, acquisitionJobStop,
+   deleteDataJobAdd, deleteDataJobStop
+} from "@/api/plcManage/plc";
 
 const { proxy } = getCurrentInstance();
 const { sys_normal_disable } = proxy.useDict("sys_normal_disable");
@@ -352,6 +403,7 @@ const isNetworkValidate = (rule, value, callback) => {
 
 const typeList = ref([]);
 const open = ref(false);
+const openDeleteDataJob = ref(false);
 const actionAdd = ref(false);
 const cardIpConfigShow = ref(false);
 const cardComShow = ref(false);
@@ -369,8 +421,10 @@ const dateRange = ref([]);
 const dictComPorts = ref([]);
 const plcCodeIsDisabled = ref(false);
 
+const plcOptions = ref([]);
 const data = reactive({
    form: {},
+   formDeleteDataJob: {},
    queryParams: {
       pageNum: 1,
       pageSize: 10,
@@ -436,11 +490,25 @@ const data = reactive({
          { message: "不能为空", required: cardSiemensShow.value, trigger: "blur" },
          { type: 'number', required: cardSiemensShow.value, validator: isZsNumberValidate, trigger: "blur" }
       ],
-
+      plcDeleteBeforeDays: [
+         { message: "不能为空", required: true, trigger: "blur" },
+         { type: 'number', required: true, validator: isZsNumberValidate, trigger: "blur" }
+      ],
+      plcDeletePeriodDays: [
+         { message: "不能为空", required: true, trigger: "blur" },
+         { type: 'number', required: true, validator: isZsNumberValidate, trigger: "blur" }
+      ],
    },
 });
 
 const { queryParams, form, rules } = toRefs(data);
+
+/** 查询PLC列表 */
+function getPlcList() {
+   optionselectPlc().then(response => {
+      plcOptions.value = response.data;
+   });
+}
 
 /** 查询PLC类型列表 */
 function getList() {
@@ -499,6 +567,15 @@ function handleAdd() {
    plcModelProtocolChange();
    plcNetworkTypeChange();
 }
+/** 定期数据清理按钮操作 */
+function openDeleteDataJob(row) {
+   const plcId = row.plcId || ids.value;
+   getPlc(plcId).then(response => {
+      formDeleteDataJob.value = response.data;
+      openDeleteDataJob.value = true;
+      title.value = "PLC历史数据清除任务管理";
+   });
+}
 /** 多选框选中数据 */
 function handleSelectionChange(selection) {
    ids.value = selection.map(item => item.plcId);
@@ -542,7 +619,6 @@ function submitForm() {
          }
       }
       else {
-         console.log(rules);
          Object.keys(ValidateFieldsError).forEach((key, i) => {
             const propName = ValidateFieldsError[key][0].field
             if (i == 0) {
@@ -570,6 +646,38 @@ function handleExport() {
    }, `plc_${new Date().getTime()}.xls`);
 }
 
+/** 定时清理任务保存 */
+function submitFormDeleteDataJob() {
+   proxy.$refs["deleteDataJobRef"].validate((valid, ValidateFieldsError) => {
+      if (valid) {
+         deleteDataJobAdd(formDeleteDataJob.value.plcId,
+            formDeleteDataJob.value.plcDeleteBeforeDays,
+            formDeleteDataJob.value.plcDeletePeriodDays
+         ).then(response => {
+            proxy.$modal.msgSuccess("操作成功");
+            openDeleteDataJob.value = false;
+         });
+      }
+      else {
+         Object.keys(ValidateFieldsError).forEach((key, i) => {
+            const propName = ValidateFieldsError[key][0].field
+            if (i == 0) {
+               proxy.$refs["deleteDataJobRef"].scrollToField(propName)
+               proxy.$modal.msgError("表单值验证失败,请检查" + propName);
+            }
+         })
+      }
+   });
+}
+/** 暂停定时清理任务 */
+function cancelDeleteDataJob() {
+   deleteDataJobStop(formDeleteDataJob.value.plcId
+   ).then(response => {
+      proxy.$modal.msgSuccess("操作成功");
+      openDeleteDataJob.value = false;
+   });
+}
+
 // /** 开启/重启采集 */
 // function handleAcquisition() {
 //    acquisitionStart(ids.value[0] ).then(response => {
@@ -582,21 +690,31 @@ function handleExport() {
 // }
 /** 添加采集任务 */
 function handleAcquisitionJobAdd() {
-   acquisitionJobAdd(ids.value[0] ).then(response => {
-      if (response && response.code == 200) { 
+   acquisitionJobAdd(ids.value[0]).then(response => {
+      if (response && response.code == 200) {
          proxy.$modal.msgSuccess("添加成功！");
-      }else{
-      proxy.$modal.msgError("任务添加失败!" + response.msg);
+      } else {
+         proxy.$modal.msgError("任务添加失败!" + response.msg);
       }
    });
 }
 /** 开始采集任务 */
 function handleAcquisitionJobStart() {
-   acquisitionJobStart(ids.value[0] ).then(response => {
-      if (response && response.code == 200) { 
+   acquisitionJobStart(ids.value[0]).then(response => {
+      if (response && response.code == 200) {
          proxy.$modal.msgSuccess("开启成功！");
-      }else{
-      proxy.$modal.msgError("任务开启失败!" + response.msg);
+      } else {
+         proxy.$modal.msgError("任务开启失败!" + response.msg);
+      }
+   });
+}
+/** 暂停采集任务 */
+function handleAcquisitionJobStop() {
+   acquisitionJobStop(ids.value[0]).then(response => {
+      if (response && response.code == 200) {
+         proxy.$modal.msgSuccess("开启成功！");
+      } else {
+         proxy.$modal.msgError("任务开启失败!" + response.msg);
       }
    });
 }
@@ -654,7 +772,7 @@ async function plcAcquisitionDriverChange(value) {
       sys_network_type.value = toRefs(optionNull.value);
    }
    if (value) {
-      
+
       let configKey = form.value.plcType + "_model_protocol_" + value;
       var list = await proxy.useDictDynamics(configKey);
 
@@ -707,7 +825,7 @@ function plcNetworkTypeChange(value) {
 
 /** 类型字典翻译 */
 function typeDictFormat(dict, value) {
-  return proxy.selectDictLabel(dict, value);
+   return proxy.selectDictLabel(dict, value);
 }
 
 
@@ -728,7 +846,7 @@ async function getSingleConfig(key) {
    });
    return value;
 }
-
+getPlcList();
 getList();
 </script>
  

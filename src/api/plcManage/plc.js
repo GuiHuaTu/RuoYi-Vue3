@@ -86,4 +86,28 @@ export function acquisitionJobStart(data) {
     data: data
   })
 }
+// 暂停采集任务
+export function acquisitionJobStop(data) {
+  return request({
+    url: '/plc/acquisitionJobStop',
+    method: 'post',
+    data: data
+  })
+}
+
+// 创建或更新并启动定时清理历史数据任务
+export function deleteDataJobAdd(plcId,beforeDays,periodDays) {
+  return request({
+    url: '/plc/deleteDataJobAdd/'+plcId+'/'+beforeDays+'/'+periodDays,
+    method: 'get'
+  })
+}
+
+// 暂停定时清理历史数据任务
+export function deleteDataJobStop(plcId) {
+  return request({
+    url: '/plc/deleteDataJobStop/'+plcId,
+    method: 'get'
+  })
+}
 
