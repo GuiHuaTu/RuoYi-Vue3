@@ -118,18 +118,25 @@
         </div> -->
 
         <div>
-            <el-tabs  v-model="activeTabsName"  type="border-card" @tab-click="onTabClick">
+            <el-tabs v-model="activeTabsName" type="border-card" @tab-click="onTabClick">
                 <el-tab-pane label="PlotLy折线图" name="plotLyShow">
                     <div id="plotLyId"></div>
                 </el-tab-pane>
                 <el-tab-pane label="Table表格" name="tableShow">
+
+                    <el-row :gutter="10" class="mb8">
+                    <el-col :span="1.5">
+                        <el-button type="warning" plain icon="Download" @click="handleExportBefore"
+                            v-hasPermi="['data:plcData:export']">导出</el-button>
+                    </el-col>
+                    </el-row>
 
                     <el-table :data="lineYListPage" @selection-change="handleSelectionChange">
                         <!-- <el-table-column type="selection" width="55" align="center" /> -->
                         <el-table-column type="index" label="序号" width="50" :index="indexMethod">
                         </el-table-column>
                         <el-table-column label="设备代码" align="center" prop="plc_code" />
-                        <el-table-column label="点位代码" align="center" prop="tag_code" :show-overflow-tooltip="true" /> 
+                        <el-table-column label="点位代码" align="center" prop="tag_code" :show-overflow-tooltip="true" />
                         <el-table-column label="点位值" align="center" prop="_value" :show-overflow-tooltip="true" />
 
                         <el-table-column label="采集时间" align="center" prop="_time" width="240">
@@ -150,9 +157,9 @@
                         <!-- <el-table-column label="操作" align="center" width="160" class-name="small-padding fixed-width">
                                 <template #default="scope">
                                 <el-button link type="primary" icon="Edit" @click="handleUpdate(scope.row)"
-                                    v-hasPermi="['system:dict:edit']">修改</el-button>
+                                    v-hasPermi="['data:plcData:edit']">修改</el-button>
                                 <el-button link type="primary" icon="Delete" @click="handleDelete(scope.row)"
-                                    v-hasPermi="['system:dict:remove']">删除</el-button>
+                                    v-hasPermi="['data:plcData:remove']">删除</el-button>
                                 </template>
                             </el-table-column> 
                             -->
@@ -187,6 +194,7 @@
 
 <script setup name="plcData">
 import { ref, inject } from "vue";
+import exportExcel from "@/utils/exportTableExcel"
 import print from 'print-js';
 import * as echarts from 'echarts';
 import * as Plot from "@observablehq/plot";
@@ -331,8 +339,8 @@ async function getTagCodeList(value) {
 function onTabClick(tab, event) {
     console.log(tab, event);
     if (tab.name == 'tableShow') {
-        getTablePage() ;
-    }  
+        getTablePage();
+    }
 }
 
 /** 查询列表 */
@@ -517,6 +525,22 @@ function handleSelectionChange(selection) {
     ids.value = selection.map(item => item.dictId);
     single.value = selection.length != 1;
     multiple.value = !selection.length;
+}
+
+/** 前端导出按钮操作 */
+function handleExportBefore() {
+    exportExcel(
+            //所需要导出的数据
+            lineYList.value,
+            [
+                { field: 'dictId', displayName: 'ID', columnSize: 5 },
+                { field: 'dictName', displayName: '字典名称', columnSize: 10 },
+                { field: 'dictType', displayName: '字典类型', columnSize: 10 },
+                { field: 'createTime', displayName: '创建时间', columnSize: 10 },
+            ],
+            '字典信息',//导出的Excel文件名
+            '字典信息',//sheetName 
+        );
 }
 
 getPlcList();

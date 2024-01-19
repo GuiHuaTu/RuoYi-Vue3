@@ -253,6 +253,7 @@ function handleExport() {
       ...queryParams.value
    }, `dict_${new Date().getTime()}.xls`);
 }
+/** 前端导出按钮操作 */
 function handleExportBefore() {
    let pageNum = queryParams.value.pageNum;
    queryParams.value.pageNum = 0; //查询所有的数据不分页
@@ -268,11 +269,9 @@ function handleExportBefore() {
          ],
          '字典信息',////导出的Excel文件名
          '字典信息',//sheetName
-         'dictTable',
       );
       queryParams.value.pageNum = pageNum;
    });
-
 }
 /** 打印按钮操作 */
 function handlePrint() {
