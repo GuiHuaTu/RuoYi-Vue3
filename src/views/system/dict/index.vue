@@ -41,6 +41,10 @@
                v-hasPermi="['system:dict:export']">导出</el-button>
          </el-col>
          <el-col :span="1.5">
+            <el-button type="warning" plain icon="Download" @click="handleExportBefore"
+               v-hasPermi="['system:dict:export']">前端导出</el-button>
+         </el-col>
+         <el-col :span="1.5">
             <el-button type="danger" plain icon="Printer" @click="handlePrint"
                v-hasPermi="['system:dict:printer']">打印</el-button>
          </el-col>
@@ -120,6 +124,7 @@
 
 <script setup name="Dict">
 import printJS from 'print-js';
+import exportExcel from "@/utils/exportTableExcel"
 import useDictStore from '@/store/modules/dict'
 import { listType, getType, delType, addType, updateType, refreshCache } from "@/api/system/dict/type";
 
@@ -248,8 +253,29 @@ function handleExport() {
       ...queryParams.value
    }, `dict_${new Date().getTime()}.xls`);
 }
+function handleExportBefore() {
+   let pageNum = queryParams.value.pageNum;
+   queryParams.value.pageNum = 0; //查询所有的数据不分页
+   listType(proxy.addDateRange(queryParams.value, dateRange.value)).then(response => {
+      exportExcel(
+         //所需要导出的数据
+         response.data,
+         [
+            { field: 'dictId', displayName: 'ID', columnSize: 5 },
+            { field: 'dictName', displayName: '字典名称', columnSize: 10 },
+            { field: 'dictType', displayName: '字典类型', columnSize: 10 },
+            { field: 'createTime', displayName: '创建时间', columnSize: 10 },
+         ],
+         '字典信息',////导出的Excel文件名
+         '字典信息',//sheetName
+         'dictTable',
+      );
+      queryParams.value.pageNum = pageNum;
+   });
+
+}
 /** 打印按钮操作 */
-function handlePrint() { 
+function handlePrint() {
    let pageNum = queryParams.value.pageNum;
    queryParams.value.pageNum = 0; //查询所有的数据不分页
    listType(proxy.addDateRange(queryParams.value, dateRange.value)).then(response => {
@@ -257,28 +283,12 @@ function handlePrint() {
          printable: response.data,
          type: 'json',
          properties: [
-            {
-               field: 'dictId',
-               displayName: 'ID',
-               columnSize: 1
-            }, 
-            {
-               field: 'dictName',
-               displayName: '字典名称',
-               columnSize: 1
-            }, 
-            {
-               field: 'dictType',
-               displayName: '字典类型',
-               columnSize: 1
-            }, 
-            {
-               field: 'createTime',
-               displayName: '创建时间',
-               columnSize: 1
-            },
+            { field: 'dictId', displayName: 'ID', columnSize: 5 },
+            { field: 'dictName', displayName: '字典名称', columnSize: 5},
+            { field: 'dictType', displayName: '字典类型', columnSize: 5},
+            { field: 'createTime', displayName: '创建时间', columnSize: 5 },
          ],
-         header: '字典清单',
+         header: '字典信息',
          // 样式设置
          gridStyle: 'border: 2px solid #3971A5;',
          gridHeaderStyle: 'color: red;  border: 2px solid #3971A5;'
