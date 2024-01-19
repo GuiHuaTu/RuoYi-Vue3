@@ -5,5 +5,6 @@
 <script setup>
 import iFrame from '@/components/iFrame'
 
-const url = ref(import.meta.env.VITE_APP_BASE_Backend_Url + "/swagger/index.html")
+const url = ref(import.meta.env.VITE_APP_BASE_API + "/swagger/index.html")
+// const url = ref(import.meta.env.VITE_APP_BASE_Backend_Url + "/swagger/index.html")
 </script>
