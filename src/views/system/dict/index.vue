@@ -41,44 +41,51 @@
                v-hasPermi="['system:dict:export']">导出</el-button>
          </el-col>
          <el-col :span="1.5">
+            <el-button type="danger" plain icon="Printer" @click="handlePrint"
+               v-hasPermi="['system:dict:printer']">打印</el-button>
+         </el-col>
+         <el-col :span="1.5">
             <el-button type="danger" plain icon="Refresh" @click="handleRefreshCache"
                v-hasPermi="['system:dict:remove']">刷新缓存</el-button>
          </el-col>
          <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
       </el-row>
 
-      <el-table v-loading="loading" :data="typeList" @selection-change="handleSelectionChange">
-         <el-table-column type="selection" width="55" align="center" />
-         <el-table-column label="字典编号" align="center" prop="dictId" />
-         <el-table-column label="字典名称" align="center" prop="dictName" :show-overflow-tooltip="true" />
-         <el-table-column label="字典类型" align="center" :show-overflow-tooltip="true">
-            <template #default="scope">
-               <router-link :to="'/system/dict-data/index/' + scope.row.dictId" class="link-type">
-                  <span>{{ scope.row.dictType }}</span>
-               </router-link>
-            </template>
-         </el-table-column>
-         <el-table-column label="状态" align="center" prop="status">
-            <template #default="scope">
-               <dict-tag :options="sys_normal_disable" :value="scope.row.status" />
-            </template>
-         </el-table-column>
-         <el-table-column label="备注" align="center" prop="remark" :show-overflow-tooltip="true" />
-         <el-table-column label="创建时间" align="center" prop="createTime" width="180">
-            <template #default="scope">
-               <span>{{ parseTime(scope.row.createTime) }}</span>
-            </template>
-         </el-table-column>
-         <el-table-column label="操作" align="center" width="160" class-name="small-padding fixed-width">
-            <template #default="scope">
-               <el-button link type="primary" icon="Edit" @click="handleUpdate(scope.row)"
-                  v-hasPermi="['system:dict:edit']">修改</el-button>
-               <el-button link type="primary" icon="Delete" @click="handleDelete(scope.row)"
-                  v-hasPermi="['system:dict:remove']">删除</el-button>
-            </template>
-         </el-table-column>
-      </el-table>
+      <div id="typeTableId">
+         <el-table v-loading="loading" :data="typeList" @selection-change="handleSelectionChange">
+            <el-table-column type="selection" width="55" align="center" />
+            <el-table-column label="字典编号" align="center" prop="dictId" />
+            <el-table-column label="字典名称" align="center" prop="dictName" :show-overflow-tooltip="true" />
+            <el-table-column label="字典类型" align="center" :show-overflow-tooltip="true">
+               <template #default="scope">
+                  <router-link :to="'/system/dict-data/index/' + scope.row.dictId" class="link-type">
+                     <span>{{ scope.row.dictType }}</span>
+                  </router-link>
+               </template>
+            </el-table-column>
+            <el-table-column label="状态" align="center" prop="status">
+               <template #default="scope">
+                  <dict-tag :options="sys_normal_disable" :value="scope.row.status" />
+               </template>
+            </el-table-column>
+            <el-table-column label="备注" align="center" prop="remark" :show-overflow-tooltip="true" />
+            <el-table-column label="创建时间" align="center" prop="createTime" width="180">
+               <template #default="scope">
+                  <span>{{ parseTime(scope.row.createTime) }}</span>
+               </template>
+            </el-table-column>
+            <el-table-column label="操作" align="center" width="160" class-name="small-padding fixed-width">
+               <template #default="scope">
+                  <el-button link type="primary" icon="Edit" @click="handleUpdate(scope.row)"
+                     v-hasPermi="['system:dict:edit']">修改</el-button>
+                  <el-button link type="primary" icon="Delete" @click="handleDelete(scope.row)"
+                     v-hasPermi="['system:dict:remove']">删除</el-button>
+               </template>
+            </el-table-column>
+         </el-table>
 
+
+      </div>
       <pagination v-show="total > 0" :total="total" v-model:page="queryParams.pageNum" v-model:limit="queryParams.pageSize"
          @pagination="getList" />
 
@@ -112,6 +119,7 @@
 </template>
 
 <script setup name="Dict">
+import printJS from 'print-js';
 import useDictStore from '@/store/modules/dict'
 import { listType, getType, delType, addType, updateType, refreshCache } from "@/api/system/dict/type";
 
@@ -239,6 +247,46 @@ function handleExport() {
    proxy.download("dictType/export", {
       ...queryParams.value
    }, `dict_${new Date().getTime()}.xls`);
+}
+/** 打印按钮操作 */
+function handlePrint() { 
+   let pageNum = queryParams.value.pageNum;
+   queryParams.value.pageNum = 0; //查询所有的数据不分页
+   listType(proxy.addDateRange(queryParams.value, dateRange.value)).then(response => {
+      var data = {
+         printable: response.data,
+         type: 'json',
+         properties: [
+            {
+               field: 'dictId',
+               displayName: 'ID',
+               columnSize: 1
+            }, 
+            {
+               field: 'dictName',
+               displayName: '字典名称',
+               columnSize: 1
+            }, 
+            {
+               field: 'dictType',
+               displayName: '字典类型',
+               columnSize: 1
+            }, 
+            {
+               field: 'createTime',
+               displayName: '创建时间',
+               columnSize: 1
+            },
+         ],
+         header: '字典清单',
+         // 样式设置
+         gridStyle: 'border: 2px solid #3971A5;',
+         gridHeaderStyle: 'color: red;  border: 2px solid #3971A5;'
+      };
+      printJS(data, 'pdf');
+      queryParams.value.pageNum = pageNum;
+   });
+
 }
 /** 刷新缓存按钮操作 */
 function handleRefreshCache() {

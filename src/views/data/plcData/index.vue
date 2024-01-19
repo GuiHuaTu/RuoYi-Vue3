@@ -187,6 +187,7 @@
 
 <script setup name="plcData">
 import { ref, inject } from "vue";
+import print from 'print-js';
 import * as echarts from 'echarts';
 import * as Plot from "@observablehq/plot";
 import PlotFigure from "./js/PlotFigure.js";
