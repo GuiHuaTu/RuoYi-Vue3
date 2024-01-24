@@ -1,9 +1,20 @@
-
+import moment from 'moment'
 
 /**
  * 通用js方法封装处理
  * Copyright (c) 2019 ruoyi
  */
+
+// 日期格式化
+ export function momentTime(time, pattern) {
+  var hm ;
+  if (typeof time === 'string') {
+    let last = time.lastIndexOf('.');
+    hm = time.substring(last).replace('Z', '');
+  }
+  const format = pattern || 'YYYY-MM-DD HH:mm:ss'
+  return moment(time).format(format) + hm;
+ }
 
 // 日期格式化
 export function parseTime(time, pattern) {
@@ -18,7 +29,7 @@ export function parseTime(time, pattern) {
     if ((typeof time === 'string') && (/^[0-9]+$/.test(time))) {
       time = parseInt(time)
     } else if (typeof time === 'string') {
-      time = time.replace(new RegExp(/-/gm), '/').replace('T', ' ').replace(new RegExp(/\.[\d]{3}/gm), '');
+      time = time.replace(new RegExp(/-/gm), '/').replace('T', ' ').replace('Z', '').replace(new RegExp(/\.[\d]{3,}/gm), '');
     }
     if ((typeof time === 'number') && (time.toString().length === 10)) {
       time = time * 1000
@@ -31,8 +42,8 @@ export function parseTime(time, pattern) {
     d: date.getDate(),
     h: date.getHours(),
     i: date.getMinutes(),
-    s: date.getSeconds(),
-    a: date.getDay()
+    s: date.getSeconds(), 
+    a: date.getDay() 
   }
   const time_str = format.replace(/{(y|m|d|h|i|s|a)+}/g, (result, key) => {
     let value = formatObj[key]

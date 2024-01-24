@@ -141,17 +141,17 @@
 
                         <el-table-column label="采集时间" align="center" prop="_time" width="240">
                             <template #default="scope">
-                                <span>{{ scope.row._time }}</span>
+                                <span>{{ momentTime(scope.row._time) }}</span>
                             </template>
                         </el-table-column>
                         <el-table-column label="起始时间" align="center" prop="_start" width="240">
                             <template #default="scope">
-                                <span>{{ scope.row._start }}</span>
+                                <span>{{ parseTime(scope.row._start ) }}</span>
                             </template>
                         </el-table-column>
                         <el-table-column label="结束时间" align="center" prop="_stop" width="240">
                             <template #default="scope">
-                                <span>{{ scope.row._stop }}</span>
+                                <span>{{ parseTime(scope.row._stop) }}</span>
                             </template>
                         </el-table-column>
                         <!-- <el-table-column label="操作" align="center" width="160" class-name="small-padding fixed-width">
@@ -204,7 +204,7 @@ import Plotly from 'plotly.js/dist/plotly';
 import { useEchartLine } from "./js/echartLinePlc.js";
 import { listTagNoPage, optionselectPlc } from "@/api/plcManage/tag";
 
-import { parseTime, getDate, getTime, getDateTime } from '@/utils/tool'
+import { parseTime, momentTime } from '@/utils/tool'
 
 import { queryByFluxQuery } from "@/api/influxDb/influx";
 
@@ -428,7 +428,7 @@ function PlotlyShow() {
         lineYList.value.forEach((item) => {
             // x.push(item._time);
             // y.push(item._value);
-            x.push(item._time);
+            x.push(momentTime(item._time));
             y.push(item._value);
         });
         dataPlotLy.value[0].x = x;
@@ -479,9 +479,6 @@ function resetQuery() {
 
 
 
-const timeFlush = reactive({
-    rangeFlush: 1000,//定义定时器间隔时间 
-})
 function dateRangeChange(value) {
     if (value == 'customRange') {
         startEndShow.value = true;
@@ -496,6 +493,9 @@ function aggregateQueryChange(value) {
         // aggregateQueryShow.value = false;
     }
 }
+const timeFlush = reactive({
+    rangeFlush: 1000,//定义定时器间隔时间 
+})
 const state = reactive({
     timeInter: null,//定义定时器
 })
@@ -538,8 +538,8 @@ function handleExportBefore() {
                 { field: 'dictType', displayName: '字典类型', columnSize: 10 },
                 { field: 'createTime', displayName: '创建时间', columnSize: 10 },
             ],
-            '字典信息',//导出的Excel文件名
-            '字典信息',//sheetName 
+            queryParams.value.plcCode + '点位采集记录',//导出的Excel文件名
+            queryParams.value.tagCode + '采集记录',//sheetName 
         );
 }
 

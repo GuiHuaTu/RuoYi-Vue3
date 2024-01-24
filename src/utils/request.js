@@ -15,7 +15,7 @@ export let isRelogin = { show: false };
 
 // Content-Type 响应头
 axios.defaults.headers['Content-Type'] = 'application/json;charset=utf-8'
-axios.defaults.headers['Access-Control-Allow-Origin'] = '*'
+// axios.defaults.headers['Access-Control-Allow-Origin'] = '*'
 // 允许跨域
 axios.defaults.withCredentials = true
 // 创建axios实例

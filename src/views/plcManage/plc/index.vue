@@ -59,7 +59,7 @@
             <el-button type="warning" plain icon="SwitchButton" :disabled="single" @click="handleAcquisitionJobStop"
                v-hasPermi="['plcManage:plc:acquisitionJobStop']">暂停采集任务</el-button>
          </el-col>
- 
+
          <el-col :span="1.5">
             <el-button type="success" plain icon="Operation" :disabled="single" @click="handleDeleteDataJob"
                v-hasPermi="['plcManage:plc:deleteDataJob']">历史数据定期清理配置</el-button>
@@ -69,14 +69,16 @@
          <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
       </el-row>
 
-      <el-table v-loading="loading" :data="typeList" @selection-change="handleSelectionChange">
-         <el-table-column type="selection" width="55" align="center" />
-         <el-table-column label="连接状态" align="center" prop="plcConnectStatus" >
+      <el-table v-loading="loading" :data="typeList" :row-key="getRowKey" @selection-change="handleSelectionChange">
+         <el-table-column type="selection" width="55" align="center" reserve-selection="true" />
+         <el-table-column label="连接状态" align="center" prop="plcConnectStatus">
             <template #default="scope">
-               <div >
-               <el-button  v-if="(scope.row.plcConnectStatus == 'Y')" class="buttonMin" type="success" :icon="Check" size="small" circle  />
-               <el-button  v-else-if="(scope.row.plcConnectStatus == 'N')" class="buttonMin" type="danger" size="small" circle  />
-               <el-button  v-else type="info" class="buttonMin" size="small" circle  />
+               <div>
+                  <el-button v-if="(scope.row.plcConnectStatus == 'Y')" class="buttonMin" type="success" :icon="Check"
+                     size="small" circle />
+                  <el-button v-else-if="(scope.row.plcConnectStatus == 'N')" class="buttonMin" type="danger" size="small"
+                     circle />
+                  <el-button v-else type="info" class="buttonMin" size="small" circle />
                </div>
             </template>
          </el-table-column>
@@ -362,12 +364,10 @@
       </el-dialog>
    </div>
 </template>
-<style scoped> 
-/* 样式这里要设置长宽，不然显示不出来 */
-.buttonMin {
-    width: 15px;
-    height: 15px;
-}
+<style scoped>  .buttonMin {
+     width: 15px;
+     height: 15px;
+  }
 </style >
  
 <script setup name="Plc">
@@ -512,7 +512,7 @@ const data = reactive({
    },
 });
 
-const { queryParams, form, rules ,formDeleteDataJob } = toRefs(data);
+const { queryParams, form, rules, formDeleteDataJob } = toRefs(data);
 
 /** 查询PLC列表 */
 function getPlcList() {
@@ -520,7 +520,10 @@ function getPlcList() {
       plcOptions.value = response.data;
    });
 }
-
+// 保存选中的数据id,row-key就是要指定一个key标识这一行的数据
+function getRowKey(row) {
+   return row.plcId
+}
 /** 查询PLC类型列表 */
 function getList() {
    loading.value = true;
@@ -707,6 +710,7 @@ function handleAcquisitionJobAdd() {
       } else {
          proxy.$modal.msgError("任务添加失败!" + response.msg);
       }
+      getList();
    });
 }
 /** 开始采集任务 */
@@ -717,6 +721,7 @@ function handleAcquisitionJobStart() {
       } else {
          proxy.$modal.msgError("任务开启失败!" + response.msg);
       }
+      getList();
    });
 }
 /** 暂停采集任务 */
@@ -727,6 +732,7 @@ function handleAcquisitionJobStop() {
       } else {
          proxy.$modal.msgError("任务开启失败!" + response.msg);
       }
+      getList();
    });
 }
 
@@ -857,6 +863,32 @@ async function getSingleConfig(key) {
    });
    return value;
 }
+
+const timeFlush = reactive({
+   rangeFlush: 1000,//定义定时器间隔时间 
+})
+const state = reactive({
+   timeInter: null,//定义定时器
+})
+//组件挂载的过程
+onMounted(async () => {
+   /// 定时采集数据显示
+   state.timeInter = setInterval(() => {
+      listPlc(proxy.addDateRange(queryParams.value, dateRange.value)).then(response => {
+         typeList.value = response.data;
+         total.value = response.total;
+      });
+   }, timeFlush.rangeFlush);
+})
+
+//组件卸载时的生命周期
+onUnmounted(() => {
+   if (state.timeInter) {
+      clearInterval(state.timeInter) //销毁
+      state.timeInter = null
+   }
+})
+
 getPlcList();
 getList();
 </script>

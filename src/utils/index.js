@@ -1,4 +1,4 @@
-import { parseTime } from './scada'
+import { parseTime } from './tool'
 
 /**
  * 表格时间格式化

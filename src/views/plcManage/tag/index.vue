@@ -57,15 +57,17 @@
          <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
       </el-row>
 
-      <el-table v-loading="loading" :data="tagList" @selection-change="handleSelectionChange">
-         <el-table-column type="selection" width="55" align="center">
+      <el-table v-loading="loading" :data="tagList" :row-key="getRowKey"  @selection-change="handleSelectionChange">
+         <el-table-column type="selection" width="55" align="center" reserve-selection="true" >
          </el-table-column>
-         <el-table-column label="采集状态" align="center" prop="tagReadStatus" >
+         <el-table-column label="采集状态" align="center" prop="tagReadStatus">
             <template #default="scope">
-               <div >
-               <el-button  v-if="(scope.row.tagReadStatus == 'Y')" class="buttonMin" type="success" :icon="Check" size="small" circle  />
-               <el-button  v-else-if="(scope.row.tagReadStatus == 'N')" class="buttonMin" type="danger" size="small" circle  />
-               <el-button  v-else type="info" class="buttonMin" size="small" circle  />
+               <div>
+                  <el-button v-if="(scope.row.tagReadStatus == 'Y')" class="buttonMin" type="success" :icon="Check"
+                     size="small" circle />
+                  <el-button v-else-if="(scope.row.tagReadStatus == 'N')" class="buttonMin" type="danger" size="small"
+                     circle />
+                  <el-button v-else type="info" class="buttonMin" size="small" circle />
                </div>
             </template>
          </el-table-column>
@@ -85,7 +87,7 @@
          </el-table-column>
          <el-table-column label="采集频率" align="center" prop="tagAcquisitionFrequency">
             <template #default="scope">
-               <span>{{ scope.row.tagAcquisitionFrequency + ' ms'}}</span>
+               <span>{{ scope.row.tagAcquisitionFrequency + ' ms' }}</span>
             </template>
          </el-table-column>
          <el-table-column label="读写权限" align="center" prop="tagReadWrite">
@@ -139,7 +141,8 @@
                </el-form-item>
 
                <el-form-item label="点位代码" prop="tagCode">
-                  <el-input v-model="form.tagCode" placeholder="请输入代码" :disabled="tagCodeIsDisabled" @input="tagCodeInput"/>
+                  <el-input v-model="form.tagCode" placeholder="请输入代码" :disabled="tagCodeIsDisabled"
+                     @input="tagCodeInput" />
                </el-form-item>
             </el-row>
             <el-row>
@@ -237,7 +240,11 @@
 
    </div>
 </template>
-
+<style scoped>  .buttonMin {
+     width: 15px;
+     height: 15px;
+  }
+</style >
 <script setup name="Tag">
 import { listTag, getTag, delTag, addTag, updateTag, optionselectPlc } from "@/api/plcManage/tag";
 import { getToken } from "@/utils/auth.js";
@@ -308,6 +315,10 @@ const data = reactive({
 
 const { queryParams, form, rules, upload } = toRefs(data);
 
+// 保存选中的数据id,row-key就是要指定一个key标识这一行的数据
+function getRowKey(row) {
+   return row.tagId
+}
 /** 查询TAG类型列表 */
 function getList() {
    loading.value = true;
@@ -426,11 +437,11 @@ async function plcCodeChange(value) {
 }
 
 /** 数据点位数据类型选择 */
-async function tagDatatypeChange(value){
+async function tagDatatypeChange(value) {
 
 }
 
-function tagCodeInput(value){
+function tagCodeInput(value) {
    form.value.tagName = value;
 }
 
@@ -443,7 +454,7 @@ async function getTagDataTypeList(driver) {
       sys_tag_datatype.value = list[datatype].value;
    }
    else {
-      sys_tag_datatype.value  = toRefs(optionNull.value);
+      sys_tag_datatype.value = toRefs(optionNull.value);
    }
 }
 /** 查询点位数据组列表 */
@@ -478,6 +489,31 @@ const handleAddTagGroup = () => {
          })
       })
 }
+
+const timeFlush = reactive({
+   rangeFlush: 1000,//定义定时器间隔时间 
+})
+const state = reactive({
+   timeInter: null,//定义定时器
+})
+//组件挂载的过程
+onMounted(async () => {  
+   /// 定时采集数据显示
+   state.timeInter = setInterval(() => {
+      listTag(proxy.addDateRange(queryParams.value, dateRange.value)).then(response => {
+      tagList.value = response.data;
+      total.value = response.total;
+   });
+   }, timeFlush.rangeFlush);
+})
+
+//组件卸载时的生命周期
+onUnmounted(() => {
+   if (state.timeInter) {
+      clearInterval(state.timeInter) //销毁
+      state.timeInter = null
+   }
+})
 
 
 getPlcList();
