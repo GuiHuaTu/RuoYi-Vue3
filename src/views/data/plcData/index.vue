@@ -533,10 +533,12 @@ function handleExportBefore() {
             //所需要导出的数据
             lineYList.value,
             [
-                { field: 'dictId', displayName: 'ID', columnSize: 5 },
-                { field: 'dictName', displayName: '字典名称', columnSize: 10 },
-                { field: 'dictType', displayName: '字典类型', columnSize: 10 },
-                { field: 'createTime', displayName: '创建时间', columnSize: 10 },
+                { field: 'plc_code', displayName: '设备代码', columnSize: 5 },
+                { field: 'tag_code', displayName: '点位代码', columnSize: 10 },
+                { field: '_value', displayName: '点位值', columnSize: 10 },
+                { field: '_time', displayName: '采集时间', columnSize: 10 },
+                { field: '_start', displayName: '起始时间', columnSize: 10 },
+                { field: '_stop', displayName: '结束时间', columnSize: 10 },
             ],
             queryParams.value.plcCode + '点位采集记录',//导出的Excel文件名
             queryParams.value.tagCode + '采集记录',//sheetName 

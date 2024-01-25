@@ -1,5 +1,5 @@
 import ExportJsonExcel from 'js-export-excel';
-import { parseTime } from '@/utils/tool'; 
+import { parseTime ,momentTime} from '@/utils/tool'; 
 
 // 只支持单sheet 导出
 //data 为所需要导出的表格数据
@@ -34,6 +34,15 @@ const exportExcel = (
           var value = data[i][item.field];
           // 筛选并格式化时间数据 
           if (item.field == 'createTime') {
+            value = parseTime(value);
+          }
+          if (item.field == '_time') {
+            value = momentTime(value);
+          }
+          if (item.field == '_start') {
+            value = parseTime(value);
+          }
+          if (item.field == '_stop') {
             value = parseTime(value);
           }
           obj[item.displayName] = value;
