@@ -11,7 +11,7 @@
           <el-button type="primary" @click="showCode()">显示工作区JavaScript代码</el-button>
           <el-button type="success" @click="saveWorkspace()">保存工作区</el-button>
           <el-button type="danger" @click="clearWorkspace()">清空工作区</el-button>
-          
+
         <div>
           <label for="workspaceInput">选择保存的工作区文件</label>
           <el-input id="workspaceInput" name="workspaceInput" type="file" multiple @change="uploadWorkspace" />
@@ -62,6 +62,12 @@ onMounted(() => {
   Blockly.setLocale(Ch);
   workspace.value = Blockly.inject("blocklyDiv", { toolbox: toolbox })
 
+  //更改工具箱中可用的块:
+  // workspace.updateToolbox(newTree);
+
+  // 更新单个分类的内容：
+  // var category = toolbox.getToolboxItems()[0];
+  // category.updateFlyoutContents(flyoutContents);
 });
 
 /**
@@ -78,14 +84,14 @@ const saveWorkspace = () => {
 
   const blob = new Blob([json], { type: "text/json" })
   saveAs(blob, '工作区状态.json')
-
-
 };
 
-const clearWorkspace=()=>{
+/** 
+ * 清空工作区
+ */
+const clearWorkspace = () => {
   // 清空工作区的内容
   workspace.value.clear();
-
 }
 
 /** 
