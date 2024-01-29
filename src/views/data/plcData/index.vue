@@ -399,7 +399,7 @@ function getList() {
     fluxQuery.value.query = `from(bucket: \"${bucketName.value}\")` +
         range.value +
         `|> filter(fn: (r) => r[\"_measurement\"] == \"${measurement.value}\")` +
-        `|> filter(fn: (r) => r["_field"] == \"${plc_code.field}\")` +queryParams.field
+        `|> filter(fn: (r) => r[\"_field\"] == \"${plc_code.field}\")` +
         `|> filter(fn: (r) => r[\"plc_code\"] == \"${plc_code.value}\")` +
         `|> filter(fn: (r) => r[\"tag_code\"] == \"${tag_code.value}\")` +
         aggregate.value;
