@@ -15,6 +15,11 @@ import moment from 'moment'
   const format = pattern || 'YYYY-MM-DD HH:mm:ss'
   return moment(time).format(format) + hm;
  }
+// moment日期格式化UTC
+export function momentUTC(time) {
+  const format = 'YYYY-MM-DDTHH:mm:ssZ'
+  return moment(time).utc().format() ;
+ }
 
 // 日期格式化
 export function parseTime(time, pattern) {

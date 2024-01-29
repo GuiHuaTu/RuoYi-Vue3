@@ -10,7 +10,7 @@
                 <el-input v-model="queryParams.tagCode" placeholder="请输入Tag代码" clearable style="width: 150px"
                     @keyup.enter="handleQuery" />
             </el-form-item>
-            <el-form-item label="检索名" prop="field" :rules="rules.field">
+            <el-form-item label="检索名" prop="field" :rules="rules.field"  v-show="false" >
                 <el-input v-model="queryParams.field" placeholder="请输入检索名" clearable style="width: 150px"
                     @keyup.enter="handleQuery" />
             </el-form-item>

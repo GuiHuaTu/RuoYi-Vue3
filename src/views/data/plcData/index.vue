@@ -26,7 +26,7 @@
                 </el-select>
             </el-form-item>
 
-            <el-form-item label="检索名" prop="field" :rules="rules.field">
+            <el-form-item label="检索名" prop="field" :rules="rules.field" v-show="false">
                 <el-input v-model="queryParams.field" placeholder="请输入检索名" clearable style="width: 150px"
                     @keyup.enter="handleQuery" />
             </el-form-item>
@@ -125,10 +125,10 @@
                 <el-tab-pane label="Table表格" name="tableShow">
 
                     <el-row :gutter="10" class="mb8">
-                    <el-col :span="1.5">
-                        <el-button type="warning" plain icon="Download" @click="handleExportBefore"
-                            v-hasPermi="['data:plcData:export']">导出</el-button>
-                    </el-col>
+                        <el-col :span="1.5">
+                            <el-button type="warning" plain icon="Download" @click="handleExportBefore"
+                                v-hasPermi="['data:plcData:export']">导出</el-button>
+                        </el-col>
                     </el-row>
 
                     <el-table :data="lineYListPage" @selection-change="handleSelectionChange">
@@ -146,7 +146,7 @@
                         </el-table-column>
                         <el-table-column label="起始时间" align="center" prop="_start" width="240">
                             <template #default="scope">
-                                <span>{{ parseTime(scope.row._start ) }}</span>
+                                <span>{{ parseTime(scope.row._start) }}</span>
                             </template>
                         </el-table-column>
                         <el-table-column label="结束时间" align="center" prop="_stop" width="240">
@@ -204,7 +204,7 @@ import Plotly from 'plotly.js/dist/plotly';
 import { useEchartLine } from "./js/echartLinePlc.js";
 import { listTagNoPage, optionselectPlc } from "@/api/plcManage/tag";
 
-import { parseTime, momentTime } from '@/utils/tool'
+import { parseTime, momentTime ,momentUTC} from '@/utils/tool'
 
 import { queryByFluxQuery } from "@/api/influxDb/influx";
 
@@ -367,6 +367,7 @@ function getList() {
     var measurement = ref('plc_log');  //表名
     var plc_code = ref(queryParams.value.plcCode);     //plc设备名
     var tag_code = ref(queryParams.value.tagCode);     //点位名
+    var field = ref(queryParams.value.field);     //field
     var period = ref(queryParams.value.period);          //X轴时间间隔
     var periodUnit = ref(queryParams.value.periodUnit);    //间隔时间单位 s m h d 
     var createEmpty = ref(false);  //是否填充缺失值 true false
@@ -378,8 +379,9 @@ function getList() {
     if (queryParams.value.dateRange == 'customRange') {
         var startTime = ref(queryParams.value.customDateRange[0]);    //开始时间
         var endTime = ref(queryParams.value.customDateRange[1]);      //结束时间
-        start.value = parseTime(startTime.value, '{y}-{m}-{d}T{h}:{i}:{s}Z');
-        stop.value = parseTime(endTime.value, '{y}-{m}-{d}T{h}:{i}:{s}Z');
+        start.value = momentUTC(startTime.value );
+        stop.value = momentUTC(endTime.value );
+        
         range.value = `|> range(start: time(v: \"${start.value}\"), stop: time(v: \"${stop.value}\"))`;
     }
     else {
@@ -398,6 +400,7 @@ function getList() {
     fluxQuery.value.query = `from(bucket: \"${bucketName.value}\")` +
         range.value +
         `|> filter(fn: (r) => r[\"_measurement\"] == \"${measurement.value}\")` +
+        `|> filter(fn: (r) => r[\"_field\"] == \"${field.value}\")` +
         `|> filter(fn: (r) => r[\"plc_code\"] == \"${plc_code.value}\")` +
         `|> filter(fn: (r) => r[\"tag_code\"] == \"${tag_code.value}\")` +
         aggregate.value;
@@ -422,6 +425,8 @@ function getTablePage() {
 
 function PlotlyShow() {
     console.log('-----------------')
+    let ctx = document.getElementById('plotLyId');
+    layoutPlotLy.value.title = queryParams.value.tagCode + "历史数据";
     if (lineYList.value && lineYList.value.length > 0) {
         var x = [];
         var y = [];
@@ -434,7 +439,6 @@ function PlotlyShow() {
         dataPlotLy.value[0].x = x;
         dataPlotLy.value[0].y = y;
 
-        let ctx = document.getElementById('plotLyId');
         Plotly.react(ctx, dataPlotLy.value, layoutPlotLy.value, configPlotLy.value);
 
         // //echart 方式；
@@ -443,6 +447,9 @@ function PlotlyShow() {
         //     dataLine.push({ name: lineYList.value[i]._time, value: [lineYList.value[i]._time, lineYList.value[i]._value] });
         // }
         // useEchartLine('mainLine', dataLine)
+    }
+    else {
+        Plotly.react(ctx, [], layoutPlotLy.value, configPlotLy.value);
     }
 
 }
@@ -530,19 +537,19 @@ function handleSelectionChange(selection) {
 /** 前端导出按钮操作 */
 function handleExportBefore() {
     exportExcel(
-            //所需要导出的数据
-            lineYList.value,
-            [
-                { field: 'plc_code', displayName: '设备代码', columnSize: 5 },
-                { field: 'tag_code', displayName: '点位代码', columnSize: 10 },
-                { field: '_value', displayName: '点位值', columnSize: 10 },
-                { field: '_time', displayName: '采集时间', columnSize: 10 },
-                { field: '_start', displayName: '起始时间', columnSize: 10 },
-                { field: '_stop', displayName: '结束时间', columnSize: 10 },
-            ],
-            queryParams.value.plcCode + '点位采集记录',//导出的Excel文件名
-            queryParams.value.tagCode + '采集记录',//sheetName 
-        );
+        //所需要导出的数据
+        lineYList.value,
+        [
+            { field: 'plc_code', displayName: '设备代码', columnSize: 5 },
+            { field: 'tag_code', displayName: '点位代码', columnSize: 10 },
+            { field: '_value', displayName: '点位值', columnSize: 10 },
+            { field: '_time', displayName: '采集时间', columnSize: 10 },
+            { field: '_start', displayName: '起始时间', columnSize: 10 },
+            { field: '_stop', displayName: '结束时间', columnSize: 10 },
+        ],
+        queryParams.value.plcCode + '点位采集记录',//导出的Excel文件名
+        queryParams.value.tagCode + '采集记录',//sheetName 
+    );
 }
 
 getPlcList();
