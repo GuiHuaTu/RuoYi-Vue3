@@ -367,6 +367,7 @@ function getList() {
     var measurement = ref('plc_log');  //表名
     var plc_code = ref(queryParams.value.plcCode);     //plc设备名
     var tag_code = ref(queryParams.value.tagCode);     //点位名
+    var field = ref(queryParams.value.field);     //field
     var period = ref(queryParams.value.period);          //X轴时间间隔
     var periodUnit = ref(queryParams.value.periodUnit);    //间隔时间单位 s m h d 
     var createEmpty = ref(false);  //是否填充缺失值 true false
@@ -398,6 +399,7 @@ function getList() {
     fluxQuery.value.query = `from(bucket: \"${bucketName.value}\")` +
         range.value +
         `|> filter(fn: (r) => r[\"_measurement\"] == \"${measurement.value}\")` +
+        `|> filter(fn: (r) => r["_field"] == \"${plc_code.field}\")` +queryParams.field
         `|> filter(fn: (r) => r[\"plc_code\"] == \"${plc_code.value}\")` +
         `|> filter(fn: (r) => r[\"tag_code\"] == \"${tag_code.value}\")` +
         aggregate.value;
