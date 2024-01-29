@@ -97,6 +97,12 @@ export const constantRoutes = [
         meta: { title: 'index', icon: 'user' }
       },
       {
+        path: "blokfactory",
+        component: () => import('@/views/tool/blockly/factory'),
+        name: 'blokfactory', 
+        meta: { title: 'blokfactory', icon: 'user' }
+      },
+      {
         path: "sample",
         component: () => import('@/views/tool/blockly/blocklySample'),
         name: 'sample', 
