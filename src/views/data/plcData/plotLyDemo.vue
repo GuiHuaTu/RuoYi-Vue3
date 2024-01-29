@@ -10,7 +10,7 @@
                 <el-input v-model="queryParams.tagCode" placeholder="请输入Tag代码" clearable style="width: 150px"
                     @keyup.enter="handleQuery" />
             </el-form-item>
-            <el-form-item label="检索名" prop="field" :rules="rules.field" v-show="false">
+            <el-form-item label="检索名" prop="field" :rules="rules.field"  v-show="false">
                 <el-input v-model="queryParams.field" placeholder="请输入检索名" clearable style="width: 150px"
                     @keyup.enter="handleQuery" />
             </el-form-item>
@@ -307,7 +307,7 @@ function getList() {
     // fluxQuery.value.query = `from(bucket: \"${bucketName.value}\")` +
     //     range.value +
     //     `|> filter(fn: (r) => r[\"_measurement\"] == \"${measurement.value}\")` +
-        // `|> filter(fn: (r) => r[\"_field\"] == \"${plc_code.field}\")` +
+        // `|> filter(fn: (r) => r[\"_field\"] == \"${field.value}\")` +
     //     `|> filter(fn: (r) => r[\"plc_code\"] == \"${plc_code.value}\")` +
     //     `|> filter(fn: (r) => r[\"tag_code\"] == \"${tag_code.value}\")` +
     //     aggregate.value ;
@@ -327,6 +327,8 @@ function getList() {
 
 function PlotlyShow() {
     console.log('-----------------')
+    let ctx = document.getElementById('plotLyId');
+    layoutPlotLy.value.title = queryParams.value.tagCode + "历史数据";
     if (lineYList.value && lineYList.value.length > 0) {
         var x = [];
         var y = [];
@@ -341,6 +343,9 @@ function PlotlyShow() {
 
         let ctx = document.getElementById('plotLyId');
         Plotly.react(ctx, dataPlotLy.value, layoutPlotLy.value, configPlotLy.value);
+    }
+    else {
+        Plotly.react(ctx, [], layoutPlotLy.value, configPlotLy.value);
     }
 
 }

@@ -16,9 +16,9 @@ import moment from 'moment'
   return moment(time).format(format) + hm;
  }
 // moment日期格式化UTC
-export function momentUTC(time, pattern) {
-  const format = pattern || 'YYYY-MM-DDTHH:mm:ssZ'
-  return moment(time).format(format);
+export function momentUTC(time) {
+  const format = 'YYYY-MM-DDTHH:mm:ssZ'
+  return moment(time).utc().format() ;
  }
 
 // 日期格式化
