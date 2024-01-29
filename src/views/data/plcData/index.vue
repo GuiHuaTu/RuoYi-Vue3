@@ -26,7 +26,7 @@
                 </el-select>
             </el-form-item>
 
-            <el-form-item label="检索名" prop="field" :rules="rules.field">
+            <el-form-item label="检索名" prop="field" :rules="rules.field"  v-show="false">
                 <el-input v-model="queryParams.field" placeholder="请输入检索名" clearable style="width: 150px"
                     @keyup.enter="handleQuery" />
             </el-form-item>
@@ -125,10 +125,10 @@
                 <el-tab-pane label="Table表格" name="tableShow">
 
                     <el-row :gutter="10" class="mb8">
-                    <el-col :span="1.5">
-                        <el-button type="warning" plain icon="Download" @click="handleExportBefore"
-                            v-hasPermi="['data:plcData:export']">导出</el-button>
-                    </el-col>
+                        <el-col :span="1.5">
+                            <el-button type="warning" plain icon="Download" @click="handleExportBefore"
+                                v-hasPermi="['data:plcData:export']">导出</el-button>
+                        </el-col>
                     </el-row>
 
                     <el-table :data="lineYListPage" @selection-change="handleSelectionChange">
@@ -146,7 +146,7 @@
                         </el-table-column>
                         <el-table-column label="起始时间" align="center" prop="_start" width="240">
                             <template #default="scope">
-                                <span>{{ parseTime(scope.row._start ) }}</span>
+                                <span>{{ parseTime(scope.row._start) }}</span>
                             </template>
                         </el-table-column>
                         <el-table-column label="结束时间" align="center" prop="_stop" width="240">
@@ -204,7 +204,7 @@ import Plotly from 'plotly.js/dist/plotly';
 import { useEchartLine } from "./js/echartLinePlc.js";
 import { listTagNoPage, optionselectPlc } from "@/api/plcManage/tag";
 
-import { parseTime, momentTime } from '@/utils/tool'
+import { parseTime, momentTime ,momentUTC} from '@/utils/tool'
 
 import { queryByFluxQuery } from "@/api/influxDb/influx";
 
@@ -379,8 +379,8 @@ function getList() {
     if (queryParams.value.dateRange == 'customRange') {
         var startTime = ref(queryParams.value.customDateRange[0]);    //开始时间
         var endTime = ref(queryParams.value.customDateRange[1]);      //结束时间
-        start.value = parseTime(startTime.value, '{y}-{m}-{d}T{h}:{i}:{s}Z');
-        stop.value = parseTime(endTime.value, '{y}-{m}-{d}T{h}:{i}:{s}Z');
+        start.value = momentUTC(startTime.value );
+        stop.value = momentUTC(endTime.value );
         range.value = `|> range(start: time(v: \"${start.value}\"), stop: time(v: \"${stop.value}\"))`;
     }
     else {
@@ -445,6 +445,9 @@ function PlotlyShow() {
         //     dataLine.push({ name: lineYList.value[i]._time, value: [lineYList.value[i]._time, lineYList.value[i]._value] });
         // }
         // useEchartLine('mainLine', dataLine)
+    }
+    else {
+
     }
 
 }
@@ -532,19 +535,19 @@ function handleSelectionChange(selection) {
 /** 前端导出按钮操作 */
 function handleExportBefore() {
     exportExcel(
-            //所需要导出的数据
-            lineYList.value,
-            [
-                { field: 'plc_code', displayName: '设备代码', columnSize: 5 },
-                { field: 'tag_code', displayName: '点位代码', columnSize: 10 },
-                { field: '_value', displayName: '点位值', columnSize: 10 },
-                { field: '_time', displayName: '采集时间', columnSize: 10 },
-                { field: '_start', displayName: '起始时间', columnSize: 10 },
-                { field: '_stop', displayName: '结束时间', columnSize: 10 },
-            ],
-            queryParams.value.plcCode + '点位采集记录',//导出的Excel文件名
-            queryParams.value.tagCode + '采集记录',//sheetName 
-        );
+        //所需要导出的数据
+        lineYList.value,
+        [
+            { field: 'plc_code', displayName: '设备代码', columnSize: 5 },
+            { field: 'tag_code', displayName: '点位代码', columnSize: 10 },
+            { field: '_value', displayName: '点位值', columnSize: 10 },
+            { field: '_time', displayName: '采集时间', columnSize: 10 },
+            { field: '_start', displayName: '起始时间', columnSize: 10 },
+            { field: '_stop', displayName: '结束时间', columnSize: 10 },
+        ],
+        queryParams.value.plcCode + '点位采集记录',//导出的Excel文件名
+        queryParams.value.tagCode + '采集记录',//sheetName 
+    );
 }
 
 getPlcList();

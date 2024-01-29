@@ -10,7 +10,7 @@
                 <el-input v-model="queryParams.tagCode" placeholder="请输入Tag代码" clearable style="width: 150px"
                     @keyup.enter="handleQuery" />
             </el-form-item>
-            <el-form-item label="检索名" prop="field" :rules="rules.field">
+            <el-form-item label="检索名" prop="field" :rules="rules.field" v-show="false">
                 <el-input v-model="queryParams.field" placeholder="请输入检索名" clearable style="width: 150px"
                     @keyup.enter="handleQuery" />
             </el-form-item>
@@ -124,7 +124,7 @@
  
 
 <script setup>
-import { parseTime, getDate, getTime, getDateTime } from '@/utils/tool'
+import { momentUTC  } from '@/utils/tool'
 
 import { queryPlcLog, queryByFluxQuery } from "@/api/influxDb/influx";
 import { ref, inject } from "vue";
@@ -273,6 +273,7 @@ function getList() {
     // var measurement = ref('plc_log');  //表名
     // var plc_code = ref(queryParams.value.plcCode);     //plc设备名
     // var tag_code = ref(queryParams.value.tagCode);     //点位名
+    // var field = ref(queryParams.value.field);     //field
     // var period = ref(queryParams.value.period);          //X轴时间间隔
     // var periodUnit = ref(queryParams.value.periodUnit);    //间隔时间单位 s m h d 
     // var createEmpty = ref(false);  //是否填充缺失值 true false
@@ -286,8 +287,8 @@ function getList() {
     // if (queryParams.value.dateRange == 'customRange') {
     //     var startTime = ref(queryParams.value.customDateRange[0]);    //开始时间
     //     var endTime = ref(queryParams.value.customDateRange[1]);      //结束时间
-    //     start.value = parseTime(startTime.value, '{y}-{m}-{d}T{h}:{i}:{s}Z');
-    //     stop.value = parseTime(endTime.value, '{y}-{m}-{d}T{h}:{i}:{s}Z');
+    //     start.value = momentUTC(startTime.value );
+    //     stop.value = momentUTC(endTime.value );
     //     range.value = `|> range(start: time(v: \"${start.value}\"), stop: time(v: \"${stop.value}\"))`;
     // }
     // else {
@@ -306,6 +307,7 @@ function getList() {
     // fluxQuery.value.query = `from(bucket: \"${bucketName.value}\")` +
     //     range.value +
     //     `|> filter(fn: (r) => r[\"_measurement\"] == \"${measurement.value}\")` +
+        // `|> filter(fn: (r) => r[\"_field\"] == \"${plc_code.field}\")` +
     //     `|> filter(fn: (r) => r[\"plc_code\"] == \"${plc_code.value}\")` +
     //     `|> filter(fn: (r) => r[\"tag_code\"] == \"${tag_code.value}\")` +
     //     aggregate.value ;
