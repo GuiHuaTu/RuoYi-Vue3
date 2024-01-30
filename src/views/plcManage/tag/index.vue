@@ -240,7 +240,8 @@
 
    </div>
 </template>
-<style scoped>  .buttonMin {
+<style scoped>  
+.buttonMin {
      width: 15px;
      height: 15px;
   }

@@ -7,9 +7,10 @@ import moment from 'moment'
 
 // 日期格式化
  export function momentTime(time, pattern) {
-  var hm ;
-  if (typeof time === 'string') {
-    let last = time.lastIndexOf('.');
+  var hm ='';
+  let last = time.lastIndexOf('.');
+
+  if (typeof time === 'string' && last > 0) {
     hm = time.substring(last).replace('Z', '');
   }
   const format = pattern || 'YYYY-MM-DD HH:mm:ss'
