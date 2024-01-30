@@ -58,6 +58,11 @@ export const constantRoutes = [
     hidden: true
   },
   {
+    path: "/mtedit",
+    component: () => import('@/views/tool/maotu/index'),
+    hidden: true
+  },
+  {
     path: '',
     component: Layout,
     redirect: '/index',
