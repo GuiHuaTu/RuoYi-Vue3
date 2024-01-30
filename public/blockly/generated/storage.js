@@ -1,190 +1,425 @@
-/**
- * @license
- * Copyright 2012 Google LLC
- * SPDX-License-Identifier: Apache-2.0
- */
+"use strict";
 
-/**
- * @fileoverview Loading and saving blocks with localStorage and cloud storage.
- */
-'use strict';
+import * as conversions from 'webidl-conversions'
+import * as utils from '../core/events/utils.js'
+// const conversions = require("webidl-conversions");
+// const utils = require("./utils.js");
 
-// Create a namespace.
-var BlocklyStorage = {};
+const implSymbol = utils.implSymbol;
+const ctorRegistrySymbol = utils.ctorRegistrySymbol;
 
-/**
- * Backup code blocks to localStorage.
- * @param {!Blockly.WorkspaceSvg} workspace Workspace.
- * @private
- */
-BlocklyStorage.backupBlocks_ = function(workspace) {
-  if ('localStorage' in window) {
-    var xml = Blockly.Xml.workspaceToDom(workspace);
-    // Gets the current URL, not including the hash.
-    var url = window.location.href.split('#')[0];
-    window.localStorage.setItem(url, Blockly.Xml.domToText(xml));
+const interfaceName = "Storage";
+
+exports.is = value => {
+  return utils.isObject(value) && utils.hasOwn(value, implSymbol) && value[implSymbol] instanceof Impl.implementation;
+};
+exports.isImpl = value => {
+  return utils.isObject(value) && value instanceof Impl.implementation;
+};
+exports.convert = (globalObject, value, { context = "The provided value" } = {}) => {
+  if (exports.is(value)) {
+    return utils.implForWrapper(value);
   }
+  throw new globalObject.TypeError(`${context} is not of type 'Storage'.`);
 };
 
-/**
- * Bind the localStorage backup function to the unload event.
- * @param {Blockly.WorkspaceSvg=} opt_workspace Workspace.
- */
-BlocklyStorage.backupOnUnload = function(opt_workspace) {
-  var workspace = opt_workspace || Blockly.getMainWorkspace();
-  window.addEventListener('unload',
-      function() {BlocklyStorage.backupBlocks_(workspace);}, false);
-};
-
-/**
- * Restore code blocks from localStorage.
- * @param {Blockly.WorkspaceSvg=} opt_workspace Workspace.
- */
-BlocklyStorage.restoreBlocks = function(opt_workspace) {
-  var url = window.location.href.split('#')[0];
-  if ('localStorage' in window && window.localStorage[url]) {
-    var workspace = opt_workspace || Blockly.getMainWorkspace();
-    var xml = Blockly.utils.xml.textToDom(window.localStorage[url]);
-    Blockly.Xml.domToWorkspace(xml, workspace);
+function makeWrapper(globalObject, newTarget) {
+  let proto;
+  if (newTarget !== undefined) {
+    proto = newTarget.prototype;
   }
-};
 
-/**
- * Save blocks to database and return a link containing key to XML.
- * @param {Blockly.WorkspaceSvg=} opt_workspace Workspace.
- */
-BlocklyStorage.link = function(opt_workspace) {
-  var workspace = opt_workspace || Blockly.getMainWorkspace();
-  var xml = Blockly.Xml.workspaceToDom(workspace, true);
-  // Remove x/y coordinates from XML if there's only one block stack.
-  // There's no reason to store this, removing it helps with anonymity.
-  if (workspace.getTopBlocks(false).length === 1 && xml.querySelector) {
-    var block = xml.querySelector('block');
-    if (block) {
-      block.removeAttribute('x');
-      block.removeAttribute('y');
-    }
+  if (!utils.isObject(proto)) {
+    proto = globalObject[ctorRegistrySymbol]["Storage"].prototype;
   }
-  var data = Blockly.Xml.domToText(xml);
-  BlocklyStorage.makeRequest_('/storage', 'xml', data, workspace);
-};
 
-/**
- * Retrieve XML text from database using given key.
- * @param {string} key Key to XML, obtained from href.
- * @param {Blockly.WorkspaceSvg=} opt_workspace Workspace.
- */
-BlocklyStorage.retrieveXml = function(key, opt_workspace) {
-  var workspace = opt_workspace || Blockly.getMainWorkspace();
-  BlocklyStorage.makeRequest_('/storage', 'key', key, workspace);
-};
+  return Object.create(proto);
+}
 
-/**
- * Global reference to current AJAX request.
- * @type {XMLHttpRequest}
- * @private
- */
-BlocklyStorage.httpRequest_ = null;
-
-/**
- * Fire a new AJAX request.
- * @param {string} url URL to fetch.
- * @param {string} name Name of parameter.
- * @param {string} content Content of parameter.
- * @param {!Blockly.WorkspaceSvg} workspace Workspace.
- * @private
- */
-BlocklyStorage.makeRequest_ = function(url, name, content, workspace) {
-  if (BlocklyStorage.httpRequest_) {
-    // AJAX call is in-flight.
-    BlocklyStorage.httpRequest_.abort();
+function makeProxy(wrapper, globalObject) {
+  let proxyHandler = proxyHandlerCache.get(globalObject);
+  if (proxyHandler === undefined) {
+    proxyHandler = new ProxyHandler(globalObject);
+    proxyHandlerCache.set(globalObject, proxyHandler);
   }
-  BlocklyStorage.httpRequest_ = new XMLHttpRequest();
-  BlocklyStorage.httpRequest_.name = name;
-  BlocklyStorage.httpRequest_.onreadystatechange =
-      BlocklyStorage.handleRequest_;
-  BlocklyStorage.httpRequest_.open('POST', url);
-  BlocklyStorage.httpRequest_.setRequestHeader('Content-Type',
-      'application/x-www-form-urlencoded');
-  BlocklyStorage.httpRequest_.send(name + '=' + encodeURIComponent(content));
-  BlocklyStorage.httpRequest_.workspace = workspace;
+  return new Proxy(wrapper, proxyHandler);
+}
+
+exports.create = (globalObject, constructorArgs, privateData) => {
+  const wrapper = makeWrapper(globalObject);
+  return exports.setup(wrapper, globalObject, constructorArgs, privateData);
 };
 
-/**
- * Callback function for AJAX call.
- * @private
- */
-BlocklyStorage.handleRequest_ = function() {
-  if (BlocklyStorage.httpRequest_.readyState === 4) {
-    if (BlocklyStorage.httpRequest_.status !== 200) {
-      BlocklyStorage.alert(BlocklyStorage.HTTPREQUEST_ERROR + '\n' +
-          'httpRequest_.status: ' + BlocklyStorage.httpRequest_.status);
-    } else {
-      var data = BlocklyStorage.httpRequest_.responseText.trim();
-      if (BlocklyStorage.httpRequest_.name === 'xml') {
-        window.location.hash = data;
-        BlocklyStorage.alert(BlocklyStorage.LINK_ALERT.replace('%1',
-            window.location.href));
-      } else if (BlocklyStorage.httpRequest_.name === 'key') {
-        if (!data.length) {
-          BlocklyStorage.alert(BlocklyStorage.HASH_ERROR.replace('%1',
-              window.location.hash));
-        } else {
-          // Remove poison line to prevent raw content from being served.
-          data = data.replace(/^\{\[\(\< UNTRUSTED CONTENT \>\)\]\}\n/, '');
-          BlocklyStorage.loadXml_(data, BlocklyStorage.httpRequest_.workspace);
-        }
-      }
-      BlocklyStorage.monitorChanges_(BlocklyStorage.httpRequest_.workspace);
-    }
-    BlocklyStorage.httpRequest_ = null;
+exports.createImpl = (globalObject, constructorArgs, privateData) => {
+  const wrapper = exports.create(globalObject, constructorArgs, privateData);
+  return utils.implForWrapper(wrapper);
+};
+
+exports._internalSetup = (wrapper, globalObject) => {};
+
+exports.setup = (wrapper, globalObject, constructorArgs = [], privateData = {}) => {
+  privateData.wrapper = wrapper;
+
+  exports._internalSetup(wrapper, globalObject);
+  Object.defineProperty(wrapper, implSymbol, {
+    value: new Impl.implementation(globalObject, constructorArgs, privateData),
+    configurable: true
+  });
+
+  wrapper = makeProxy(wrapper, globalObject);
+
+  wrapper[implSymbol][utils.wrapperSymbol] = wrapper;
+  if (Impl.init) {
+    Impl.init(wrapper[implSymbol]);
   }
+  return wrapper;
 };
 
-/**
- * Start monitoring the workspace.  If a change is made that changes the XML,
- * clear the key from the URL.  Stop monitoring the workspace once such a
- * change is detected.
- * @param {!Blockly.WorkspaceSvg} workspace Workspace.
- * @private
- */
-BlocklyStorage.monitorChanges_ = function(workspace) {
-  var startXmlDom = Blockly.Xml.workspaceToDom(workspace);
-  var startXmlText = Blockly.Xml.domToText(startXmlDom);
-  function change() {
-    var xmlDom = Blockly.Xml.workspaceToDom(workspace);
-    var xmlText = Blockly.Xml.domToText(xmlDom);
-    if (startXmlText !== xmlText) {
-      window.location.hash = '';
-      workspace.removeChangeListener(change);
-    }
+exports.new = (globalObject, newTarget) => {
+  let wrapper = makeWrapper(globalObject, newTarget);
+
+  exports._internalSetup(wrapper, globalObject);
+  Object.defineProperty(wrapper, implSymbol, {
+    value: Object.create(Impl.implementation.prototype),
+    configurable: true
+  });
+
+  wrapper = makeProxy(wrapper, globalObject);
+
+  wrapper[implSymbol][utils.wrapperSymbol] = wrapper;
+  if (Impl.init) {
+    Impl.init(wrapper[implSymbol]);
   }
-  workspace.addChangeListener(change);
+  return wrapper[implSymbol];
 };
 
-/**
- * Load blocks from XML.
- * @param {string} xml Text representation of XML.
- * @param {!Blockly.WorkspaceSvg} workspace Workspace.
- * @private
- */
-BlocklyStorage.loadXml_ = function(xml, workspace) {
-  try {
-    xml = Blockly.utils.xml.textToDom(xml);
-  } catch (e) {
-    BlocklyStorage.alert(BlocklyStorage.XML_ERROR + '\nXML: ' + xml);
+const exposed = new Set(["Window"]);
+
+exports.install = (globalObject, globalNames) => {
+  if (!globalNames.some(globalName => exposed.has(globalName))) {
     return;
   }
-  // Clear the workspace to avoid merge.
-  workspace.clear();
-  Blockly.Xml.domToWorkspace(xml, workspace);
+
+  const ctorRegistry = utils.initCtorRegistry(globalObject);
+  class Storage {
+    constructor() {
+      throw new globalObject.TypeError("Illegal constructor");
+    }
+
+    key(index) {
+      const esValue = this !== null && this !== undefined ? this : globalObject;
+      if (!exports.is(esValue)) {
+        throw new globalObject.TypeError("'key' called on an object that is not a valid instance of Storage.");
+      }
+
+      if (arguments.length < 1) {
+        throw new globalObject.TypeError(
+          `Failed to execute 'key' on 'Storage': 1 argument required, but only ${arguments.length} present.`
+        );
+      }
+      const args = [];
+      {
+        let curArg = arguments[0];
+        curArg = conversions["unsigned long"](curArg, {
+          context: "Failed to execute 'key' on 'Storage': parameter 1",
+          globals: globalObject
+        });
+        args.push(curArg);
+      }
+      return esValue[implSymbol].key(...args);
+    }
+
+    getItem(key) {
+      const esValue = this !== null && this !== undefined ? this : globalObject;
+      if (!exports.is(esValue)) {
+        throw new globalObject.TypeError("'getItem' called on an object that is not a valid instance of Storage.");
+      }
+
+      if (arguments.length < 1) {
+        throw new globalObject.TypeError(
+          `Failed to execute 'getItem' on 'Storage': 1 argument required, but only ${arguments.length} present.`
+        );
+      }
+      const args = [];
+      {
+        let curArg = arguments[0];
+        curArg = conversions["DOMString"](curArg, {
+          context: "Failed to execute 'getItem' on 'Storage': parameter 1",
+          globals: globalObject
+        });
+        args.push(curArg);
+      }
+      return esValue[implSymbol].getItem(...args);
+    }
+
+    setItem(key, value) {
+      const esValue = this !== null && this !== undefined ? this : globalObject;
+      if (!exports.is(esValue)) {
+        throw new globalObject.TypeError("'setItem' called on an object that is not a valid instance of Storage.");
+      }
+
+      if (arguments.length < 2) {
+        throw new globalObject.TypeError(
+          `Failed to execute 'setItem' on 'Storage': 2 arguments required, but only ${arguments.length} present.`
+        );
+      }
+      const args = [];
+      {
+        let curArg = arguments[0];
+        curArg = conversions["DOMString"](curArg, {
+          context: "Failed to execute 'setItem' on 'Storage': parameter 1",
+          globals: globalObject
+        });
+        args.push(curArg);
+      }
+      {
+        let curArg = arguments[1];
+        curArg = conversions["DOMString"](curArg, {
+          context: "Failed to execute 'setItem' on 'Storage': parameter 2",
+          globals: globalObject
+        });
+        args.push(curArg);
+      }
+      return esValue[implSymbol].setItem(...args);
+    }
+
+    removeItem(key) {
+      const esValue = this !== null && this !== undefined ? this : globalObject;
+      if (!exports.is(esValue)) {
+        throw new globalObject.TypeError("'removeItem' called on an object that is not a valid instance of Storage.");
+      }
+
+      if (arguments.length < 1) {
+        throw new globalObject.TypeError(
+          `Failed to execute 'removeItem' on 'Storage': 1 argument required, but only ${arguments.length} present.`
+        );
+      }
+      const args = [];
+      {
+        let curArg = arguments[0];
+        curArg = conversions["DOMString"](curArg, {
+          context: "Failed to execute 'removeItem' on 'Storage': parameter 1",
+          globals: globalObject
+        });
+        args.push(curArg);
+      }
+      return esValue[implSymbol].removeItem(...args);
+    }
+
+    clear() {
+      const esValue = this !== null && this !== undefined ? this : globalObject;
+      if (!exports.is(esValue)) {
+        throw new globalObject.TypeError("'clear' called on an object that is not a valid instance of Storage.");
+      }
+
+      return esValue[implSymbol].clear();
+    }
+
+    get length() {
+      const esValue = this !== null && this !== undefined ? this : globalObject;
+
+      if (!exports.is(esValue)) {
+        throw new globalObject.TypeError("'get length' called on an object that is not a valid instance of Storage.");
+      }
+
+      return esValue[implSymbol]["length"];
+    }
+  }
+  Object.defineProperties(Storage.prototype, {
+    key: { enumerable: true },
+    getItem: { enumerable: true },
+    setItem: { enumerable: true },
+    removeItem: { enumerable: true },
+    clear: { enumerable: true },
+    length: { enumerable: true },
+    [Symbol.toStringTag]: { value: "Storage", configurable: true }
+  });
+  ctorRegistry[interfaceName] = Storage;
+
+  Object.defineProperty(globalObject, interfaceName, {
+    configurable: true,
+    writable: true,
+    value: Storage
+  });
 };
 
-/**
- * Present a text message to the user.
- * Designed to be overridden if an app has custom dialogs, or a butter bar.
- * @param {string} message Text to alert.
- */
-BlocklyStorage.alert = function(message) {
-  window.alert(message);
-};
+const proxyHandlerCache = new WeakMap();
+class ProxyHandler {
+  constructor(globalObject) {
+    this._globalObject = globalObject;
+  }
+
+  get(target, P, receiver) {
+    if (typeof P === "symbol") {
+      return Reflect.get(target, P, receiver);
+    }
+    const desc = this.getOwnPropertyDescriptor(target, P);
+    if (desc === undefined) {
+      const parent = Object.getPrototypeOf(target);
+      if (parent === null) {
+        return undefined;
+      }
+      return Reflect.get(target, P, receiver);
+    }
+    if (!desc.get && !desc.set) {
+      return desc.value;
+    }
+    const getter = desc.get;
+    if (getter === undefined) {
+      return undefined;
+    }
+    return Reflect.apply(getter, receiver, []);
+  }
+
+  has(target, P) {
+    if (typeof P === "symbol") {
+      return Reflect.has(target, P);
+    }
+    const desc = this.getOwnPropertyDescriptor(target, P);
+    if (desc !== undefined) {
+      return true;
+    }
+    const parent = Object.getPrototypeOf(target);
+    if (parent !== null) {
+      return Reflect.has(parent, P);
+    }
+    return false;
+  }
+
+  ownKeys(target) {
+    const keys = new Set();
+
+    for (const key of target[implSymbol][utils.supportedPropertyNames]) {
+      if (!(key in target)) {
+        keys.add(`${key}`);
+      }
+    }
+
+    for (const key of Reflect.ownKeys(target)) {
+      keys.add(key);
+    }
+    return [...keys];
+  }
+
+  getOwnPropertyDescriptor(target, P) {
+    if (typeof P === "symbol") {
+      return Reflect.getOwnPropertyDescriptor(target, P);
+    }
+    let ignoreNamedProps = false;
+
+    const namedValue = target[implSymbol].getItem(P);
+
+    if (namedValue !== null && !(P in target) && !ignoreNamedProps) {
+      return {
+        writable: true,
+        enumerable: true,
+        configurable: true,
+        value: utils.tryWrapperForImpl(namedValue)
+      };
+    }
+
+    return Reflect.getOwnPropertyDescriptor(target, P);
+  }
+
+  set(target, P, V, receiver) {
+    if (typeof P === "symbol") {
+      return Reflect.set(target, P, V, receiver);
+    }
+    // The `receiver` argument refers to the Proxy exotic object or an object
+    // that inherits from it, whereas `target` refers to the Proxy target:
+    if (target[implSymbol][utils.wrapperSymbol] === receiver) {
+      const globalObject = this._globalObject;
+
+      if (typeof P === "string") {
+        let namedValue = V;
+
+        namedValue = conversions["DOMString"](namedValue, {
+          context: "Failed to set the '" + P + "' property on 'Storage': The provided value",
+          globals: globalObject
+        });
+
+        target[implSymbol].setItem(P, namedValue);
+
+        return true;
+      }
+    }
+    let ownDesc;
+
+    if (ownDesc === undefined) {
+      ownDesc = Reflect.getOwnPropertyDescriptor(target, P);
+    }
+    if (ownDesc === undefined) {
+      const parent = Reflect.getPrototypeOf(target);
+      if (parent !== null) {
+        return Reflect.set(parent, P, V, receiver);
+      }
+      ownDesc = { writable: true, enumerable: true, configurable: true, value: undefined };
+    }
+    if (!ownDesc.writable) {
+      return false;
+    }
+    if (!utils.isObject(receiver)) {
+      return false;
+    }
+    const existingDesc = Reflect.getOwnPropertyDescriptor(receiver, P);
+    let valueDesc;
+    if (existingDesc !== undefined) {
+      if (existingDesc.get || existingDesc.set) {
+        return false;
+      }
+      if (!existingDesc.writable) {
+        return false;
+      }
+      valueDesc = { value: V };
+    } else {
+      valueDesc = { writable: true, enumerable: true, configurable: true, value: V };
+    }
+    return Reflect.defineProperty(receiver, P, valueDesc);
+  }
+
+  defineProperty(target, P, desc) {
+    if (typeof P === "symbol") {
+      return Reflect.defineProperty(target, P, desc);
+    }
+
+    const globalObject = this._globalObject;
+    if (!utils.hasOwn(target, P)) {
+      if (desc.get || desc.set) {
+        return false;
+      }
+
+      let namedValue = desc.value;
+
+      namedValue = conversions["DOMString"](namedValue, {
+        context: "Failed to set the '" + P + "' property on 'Storage': The provided value",
+        globals: globalObject
+      });
+
+      target[implSymbol].setItem(P, namedValue);
+
+      return true;
+    }
+    return Reflect.defineProperty(target, P, desc);
+  }
+
+  deleteProperty(target, P) {
+    if (typeof P === "symbol") {
+      return Reflect.deleteProperty(target, P);
+    }
+
+    const globalObject = this._globalObject;
+
+    if (target[implSymbol].getItem(P) !== null && !(P in target)) {
+      target[implSymbol].removeItem(P);
+      return true;
+    }
+
+    return Reflect.deleteProperty(target, P);
+  }
+
+  preventExtensions() {
+    return false;
+  }
+}
+
+const Impl = require("../webstorage/Storage-impl.js");
