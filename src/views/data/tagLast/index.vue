@@ -229,7 +229,13 @@ onMounted(async () => {
     /// 定时采集数据显示
     state.timeInter = setInterval(() => {
         listTagLast(proxy.addDateRange(queryParams.value, dateRange.value)).then(response => {
-            var tagLasts = response.data.map(item => ({ tagId: item.tagId, tagValue: item.tagValue }));
+            var tagLasts = response.data.map(item => ({
+                tagId: item.tagId,
+                tagValue: item.tagValue,
+                tagStat: item.tagStat,
+                createTime: item.createTime
+            }));
+
             tagLastData.value.forEach(element => {
                 element.tagValue = tagLasts.filter(p => p.tagId == element.tagId)[0].tagValue;
                 element.tagStat = tagLasts.filter(p => p.tagId == element.tagId)[0].tagStat;
