@@ -60,7 +60,7 @@
       <el-table v-loading="loading" :data="tagList" :row-key="getRowKey"  @selection-change="handleSelectionChange">
          <el-table-column type="selection" width="55" align="center" reserve-selection="true" >
          </el-table-column>
-         <el-table-column label="采集状态" align="center" prop="tagReadStatus">
+         <el-table-column label="采集状态" align="center" >
             <template #default="scope">
                <div>
                   <el-button v-if="(scope.row.tagReadStatus == 'Y')" class="buttonMin" type="success" :icon="Check"
@@ -501,7 +501,11 @@ onMounted(async () => {
    /// 定时采集数据显示
    state.timeInter = setInterval(() => {
       listTag(proxy.addDateRange(queryParams.value, dateRange.value)).then(response => {
-      tagList.value = response.data;
+      var tagstat = response.data.map(item => ({tagId:item.tagId,tagReadStatus:item.tagReadStatus}) ); 
+    
+      tagList.value.forEach(element => {
+         element.tagReadStatus = tagstat.filter(p=>p.tagId == element.tagId)[0].tagReadStatus;
+      });
       total.value = response.total;
    });
    }, timeFlush.rangeFlush);

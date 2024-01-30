@@ -71,7 +71,7 @@
 
       <el-table v-loading="loading" :data="typeList" :row-key="getRowKey" @selection-change="handleSelectionChange">
          <el-table-column type="selection" width="55" align="center" reserve-selection="true" />
-         <el-table-column label="连接状态" align="center" prop="plcConnectStatus">
+         <el-table-column label="连接状态" align="center">
             <template #default="scope">
                <div>
                   <el-button v-if="(scope.row.plcConnectStatus == 'Y')" class="buttonMin" type="success" :icon="Check"
@@ -875,7 +875,10 @@ onMounted(async () => {
    /// 定时采集数据显示
    state.timeInter = setInterval(() => {
       listPlc(proxy.addDateRange(queryParams.value, dateRange.value)).then(response => {
-         typeList.value = response.data;
+         var plcstat = response.data.map(item => ({ plcId: item.plcId, plcConnectStatus: item.plcConnectStatus }));
+         typeList.value.forEach(element => {
+            element.plcConnectStatus = plcstat.filter(p => p.plcId == element.plcId)[0].plcConnectStatus;
+         }); 
          total.value = response.total;
       });
    }, timeFlush.rangeFlush);
