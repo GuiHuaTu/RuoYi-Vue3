@@ -85,6 +85,20 @@ export const constantRoutes = [
     ]
   },
   {
+    path: '/maotu',
+    component: Layout,
+    hidden: true,
+    redirect: 'noredirect',
+    children: [
+      {
+        path: "mtedit",
+        component: () => import('@/views/tool/maotu/index'),
+        name: 'mtedit', 
+        meta: { title: 'mtedit', icon: 'user' }
+      },
+    ]
+  },
+  {
     path: '/blockly',
     component: Layout,
     hidden: true,
