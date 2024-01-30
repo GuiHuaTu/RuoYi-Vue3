@@ -11,7 +11,8 @@ import usePermissionStore from '@/store/modules/permission'
 
 NProgress.configure({ showSpinner: false });
 
-const whiteList = ['/login', '/register'];
+const whiteList = ['/login', '/register','/mtedit'
+,'/blockly/index','/blockly/blokfactory','/blockly/sample'];
 
 router.beforeEach((to, from, next) => {
   NProgress.start()
@@ -55,6 +56,7 @@ router.beforeEach((to, from, next) => {
       }
     }
   } else {
+    debugger
     // 没有token
     if (whiteList.indexOf(to.path) !== -1) {
       // 在免登录白名单，直接进入
