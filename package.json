@@ -21,6 +21,7 @@
     "@vueup/vue-quill": "1.2.0",
     "@vueuse/core": "10.6.1",
     "axios": "0.27.2",
+    "blockly": "^10.3.1",
     "echarts": "^5.4.3",
     "element-plus": "2.4.3",
     "file-saver": "2.0.5",
@@ -33,9 +34,11 @@
     "pinia": "2.1.7",
     "plotly.js": "^2.27.1",
     "print-js": "^1.6.0",
+    "vite-plugin-require": "^1.1.14",
     "vue": "3.3.9",
     "vue-cropper": "1.1.1",
-    "vue-router": "4.2.5"
+    "vue-router": "4.2.5",
+    "webidl-conversions": "^7.0.0"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "4.5.0",

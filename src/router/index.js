@@ -83,7 +83,34 @@ export const constantRoutes = [
         meta: { title: '个人中心', icon: 'user' }
       }
     ]
-  }
+  },
+  {
+    path: '/blockly',
+    component: Layout,
+    hidden: true,
+    redirect: 'noredirect',
+    children: [
+      {
+        path: "index",
+        component: () => import('@/views/tool/blockly/index'),
+        name: 'index', 
+        meta: { title: 'index', icon: 'user' }
+      },
+      {
+        path: "blokfactory",
+        component: () => import('@/views/tool/blockly/factory'),
+        name: 'blokfactory', 
+        meta: { title: 'blokfactory', icon: 'user' }
+      },
+      {
+        path: "sample",
+        component: () => import('@/views/tool/blockly/blocklySample'),
+        name: 'sample', 
+        meta: { title: '官方示例', icon: 'user' }
+      },
+    ]
+  },
+
 ]
 
 // 动态路由，基于用户权限动态去加载
