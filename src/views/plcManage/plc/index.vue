@@ -71,7 +71,7 @@
 
       <el-table v-loading="loading" :data="typeList" :row-key="getRowKey" @selection-change="handleSelectionChange">
          <el-table-column type="selection" width="55" align="center" reserve-selection="true" />
-         <el-table-column label="连接状态" align="center">
+         <el-table-column label="连接状态" align="center" prop="plcConnectStatus" >
             <template #default="scope">
                <div>
                   <el-button v-if="(scope.row.plcConnectStatus == 'Y')" class="buttonMin" type="success" :icon="Check"

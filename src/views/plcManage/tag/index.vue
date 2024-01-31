@@ -57,10 +57,10 @@
          <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
       </el-row>
 
-      <el-table v-loading="loading" :data="tagList" :row-key="getRowKey"  @selection-change="handleSelectionChange">
-         <el-table-column type="selection" width="55" align="center" reserve-selection="true" >
+      <el-table v-loading="loading" :data="tagList" :row-key="getRowKey" @selection-change="handleSelectionChange">
+         <el-table-column type="selection" width="55" align="center" reserve-selection="true">
          </el-table-column>
-         <el-table-column label="采集状态" align="center" >
+         <el-table-column label="采集状态" align="center" prop="tagReadStatus">
             <template #default="scope">
                <div>
                   <el-button v-if="(scope.row.tagReadStatus == 'Y')" class="buttonMin" type="success" :icon="Check"
@@ -112,6 +112,8 @@
                   v-hasPermi="['plcManage:tag:edit']">修改</el-button>
                <el-button type="text" icon="Delete" @click="handleDelete(scope.row)"
                   v-hasPermi="['plcManage:tag:remove']">删除</el-button>
+               <el-button type="text" @click="handleGraphic(scope.row)"
+                  v-hasPermi="['data:plcData:multipleLine']">图形属性</el-button>
             </template>
          </el-table-column>
       </el-table>
@@ -189,6 +191,96 @@
                </el-form-item>
             </el-row>
 
+            <el-form-item label="多点线展示" prop="tagMultipleGraphic">
+               <el-radio-group v-model="form.tagMultipleGraphic">
+                  <el-radio v-for="item in sys_yes_no" :key="item.value" :label="item.value">{{ item.label
+                  }}</el-radio>
+               </el-radio-group>
+            </el-form-item>
+            <el-form-item label="备注" prop="remark">
+               <el-input v-model="form.remark" type="textarea" placeholder="请输入内容"></el-input>
+            </el-form-item>
+         </el-form>
+         <template #footer>
+            <div class="dialog-footer">
+               <el-button type="primary" @click="submitForm">确 定</el-button>
+               <el-button @click="cancel">取 消</el-button>
+            </div>
+         </template>
+      </el-dialog>
+
+      <!-- 添加或修改对话框 图形属性-->
+      <el-dialog :title="title" v-model="openGraphic" width="780px" append-to-body>
+         <el-form ref="graphicRef" :model="formGraphic" :rules="rules" label-width="120px">
+            <el-row>
+               <el-form-item label="图形类型" prop="tagPlotlyType">
+                  <el-select v-model="formGraphic.tagPlotlyType" placeholder="请选择图形类型">
+                     <el-option label="分散点线" value="scatter" key="scatter"></el-option>
+                     <el-option label="条形" value="bar" key="bar"></el-option>
+                  </el-select>
+               </el-form-item>
+               <el-form-item label="图形模型" prop="tagPlotlyMode">
+                  <el-select v-model="formGraphic.tagPlotlyMode" placeholder="请选择图形模型">
+                     <el-option label="点线" value="lines+markers" key="lines+markers"></el-option>
+                     <el-option label="点" value="markers" key="markers"></el-option>
+                     <el-option label="线" value="lines" key="lines"></el-option>
+                  </el-select>
+               </el-form-item>
+
+            </el-row>
+            <el-row>
+               <el-form-item label="线条颜色" prop="tagLineColor">
+                  <el-select v-model="formGraphic.tagLineColor" placeholder="请选择">
+                     <el-option label="蓝色" value="blue" key="blue"></el-option>
+                     <el-option label="天蓝色" value="skyblue" key="skyblue"></el-option>
+                     <el-option label="绿色" value="green" key="green"></el-option>
+                     <el-option label="橙色" value="orange" key="orange"></el-option>
+                     <el-option label="黄色" value="yellow" key="yellow"></el-option>
+                  </el-select>
+               </el-form-item>
+
+               <el-form-item label="线条宽度" prop="tagLineWidth">
+                  <el-input-number v-model="formGraphic.tagLineWidth" :min="2" />
+               </el-form-item>
+            </el-row>
+            <el-row>
+
+               <el-form-item label="线条形状" prop="tagLineDash">
+                  <el-select v-model="formGraphic.tagLineDash" placeholder="请选择">
+                     <el-option label="连续线" value="Solid" key="Solid"></el-option>
+                     <el-option label="点线" value="dot" key="dot"></el-option>
+                     <el-option label="长短线" value="dashdot" key="dashdot"></el-option>
+                  </el-select>
+               </el-form-item>
+               <el-form-item label="线条转折方向" prop="tagLineShape">
+                  <el-select v-model="formGraphic.tagLineShape" placeholder="请选择">
+                     <el-option label="spline" value="spline" key="spline"></el-option>
+                     <el-option label="linear" value="linear" key="linear"></el-option>
+                     <el-option label="vhv" value="vhv" key="vhv"></el-option>
+                     <el-option label="hvh" value="hvh" key="hvh"></el-option>
+                     <el-option label="vh" value="vh" key="vh"></el-option>
+                     <el-option label="hv" value="hv" key="hv"></el-option>
+                  </el-select>
+               </el-form-item>
+            </el-row>
+            <el-row>
+               <el-form-item label="标记颜色" prop="tagMarkerColor">
+                  <el-select v-model="formGraphic.tagMarkerColor" placeholder="请选择">
+                     <el-option label="蓝色" value="blue" key="blue"></el-option>
+                     <el-option label="天蓝色" value="skyblue" key="skyblue"></el-option>
+                     <el-option label="绿色" value="green" key="green"></el-option>
+                     <el-option label="橙色" value="orange" key="orange"></el-option>
+                     <el-option label="黄色" value="yellow" key="yellow"></el-option>
+                     <el-option label="黑色" value="black" key="black"></el-option>
+                     <el-option label="红色" value="red" key="red"></el-option>
+                  </el-select>
+               </el-form-item>
+
+               <el-form-item label="标记大小" prop="tagMarkerSize">
+                  <el-input-number v-model="formGraphic.tagMarkerSize" :min="5" />
+               </el-form-item>
+            </el-row>
+
             <el-form-item label="备注" prop="remark">
                <el-input v-model="form.remark" type="textarea" placeholder="请输入内容"></el-input>
             </el-form-item>
@@ -240,20 +332,21 @@
 
    </div>
 </template>
-<style scoped>  
-.buttonMin {
+<style scoped>  .buttonMin {
      width: 15px;
      height: 15px;
   }
 </style >
 <script setup name="Tag">
-import { listTag, getTag, delTag, addTag, updateTag, optionselectPlc } from "@/api/plcManage/tag";
+import { listTag, getTag, delTag, addTag, updateTag, optionselectPlc, getTagGraphic, saveTagGraphic } from "@/api/plcManage/tag";
 import { getToken } from "@/utils/auth.js";
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { addData } from "@/api/system/dict/data";
 
 const { proxy } = getCurrentInstance();
 const { sys_normal_disable } = proxy.useDict("sys_normal_disable");
+const { sys_yes_no } = proxy.useDict("sys_yes_no");
+
 const { sys_read_write } = proxy.useDict("sys_read_write");
 const sys_tag_group = ref([]);
 const sys_tag_datatype = ref([]);
@@ -264,10 +357,12 @@ const isZsNumberValidate = inject('isZsNumberValidate');
 
 const tagList = ref([]);
 const open = ref(false);
+const openGraphic = ref(false);
 const actionAdd = ref(false);
 const loading = ref(true);
 const showSearch = ref(true);
 const ids = ref([]);
+const tagIdGraphic = ref(Number);
 const single = ref(true);
 const multiple = ref(true);
 const total = ref(0);
@@ -278,6 +373,7 @@ const tagCodeIsDisabled = ref(false);
 
 const data = reactive({
    form: {},
+   formGraphic: {},
    queryParams: {
       pageNum: 1,
       pageSize: 10,
@@ -294,6 +390,8 @@ const data = reactive({
       tagAddress: [{ required: true, message: "不能为空", trigger: "blur" }],
       tagAcquisitionFrequency: [{ required: true, message: "不能为空", trigger: "blur" },
       { type: 'number', required: true, validator: isZsNumberValidate, trigger: "blur" }],
+      tagPlotlyType:[{ required: true, message: "不能为空", trigger: "blur" }],
+      tagPlotlyMode:[{ required: true, message: "不能为空", trigger: "blur" }],
    },
    // 导入参数
    upload: {
@@ -314,7 +412,7 @@ const data = reactive({
    },
 });
 
-const { queryParams, form, rules, upload } = toRefs(data);
+const { queryParams, form, rules, upload, formGraphic } = toRefs(data);
 
 // 保存选中的数据id,row-key就是要指定一个key标识这一行的数据
 function getRowKey(row) {
@@ -331,6 +429,7 @@ function getList() {
 }
 /** 取消按钮 */
 function cancel() {
+   openGraphic.value = false;
    open.value = false;
    reset();
 }
@@ -342,6 +441,7 @@ function reset() {
       tagCode: undefined,
       status: "0",
       tagReadWrite: "0",
+      tagMultipleGraphic: 'N',
       tagAcquisitionFrequency: 100,
       remark: undefined
    };
@@ -378,7 +478,7 @@ function handleUpdate(row) {
    reset();
    const tagId = row.tagId || ids.value;
    getTag(tagId).then(response => {
-      form.value = response.data;
+      form.value = response.data || {};
       open.value = true;
       title.value = "修改点位";
       actionAdd.value = false;
@@ -389,25 +489,39 @@ function handleUpdate(row) {
    });
 }
 /** 提交按钮 */
-function submitForm() {
-   proxy.$refs["tagRef"].validate(valid => {
-      if (valid) {
-         if (form.value.tagId != undefined) {
-            updateTag(form.value).then(response => {
-               proxy.$modal.msgSuccess("修改成功");
-               open.value = false;
-               getList();
-            });
-         } else {
-            form.value.plcCode = form.value.plcCode.plcCode;
-            addTag(form.value).then(response => {
-               proxy.$modal.msgSuccess("新增成功");
-               open.value = false;
+function submitForm(row) {
+   if (open.value) {
+      proxy.$refs["tagRef"].validate(valid => {
+         if (valid) {
+            if (form.value.tagId != undefined) {
+               updateTag(form.value).then(response => {
+                  proxy.$modal.msgSuccess("修改成功");
+                  open.value = false;
+                  getList();
+               });
+            } else {
+               form.value.plcCode = form.value.plcCode.plcCode;
+               addTag(form.value).then(response => {
+                  proxy.$modal.msgSuccess("新增成功");
+                  open.value = false;
+                  getList();
+               });
+            }
+         }
+      });
+   }
+   if (openGraphic.value) {
+      proxy.$refs["graphicRef"].validate(valid => {
+         if (valid) { 
+            formGraphic.value.tagId = tagIdGraphic.value;
+            saveTagGraphic(formGraphic.value).then(response => {
+               proxy.$modal.msgSuccess("保存成功");
+               openGraphic.value = false;
                getList();
             });
          }
-      }
-   });
+      });
+   }
 }
 /** 删除按钮操作 */
 function handleDelete(row) {
@@ -418,6 +532,15 @@ function handleDelete(row) {
       getList();
       proxy.$modal.msgSuccess("删除成功");
    }).catch(() => { });
+}
+
+function handleGraphic(row) {
+   tagIdGraphic.value = row.tagId || ids.value; 
+   getTagGraphic(tagIdGraphic.value).then(response => {
+      formGraphic.value = response.data || {};
+      openGraphic.value = true;
+      title.value = "修改图形属性";
+   });
 }
 /** 导出按钮操作 */
 function handleExport() {
@@ -498,17 +621,17 @@ const state = reactive({
    timeInter: null,//定义定时器
 })
 //组件挂载的过程
-onMounted(async () => {  
+onMounted(async () => {
    /// 定时采集数据显示
    state.timeInter = setInterval(() => {
       listTag(proxy.addDateRange(queryParams.value, dateRange.value)).then(response => {
-      var tagstat = response.data.map(item => ({tagId:item.tagId,tagReadStatus:item.tagReadStatus}) ); 
-    
-      tagList.value.forEach(element => {
-         element.tagReadStatus = tagstat.filter(p=>p.tagId == element.tagId)[0].tagReadStatus;
+         var tagstat = response.data.map(item => ({ tagId: item.tagId, tagReadStatus: item.tagReadStatus }));
+
+         tagList.value.forEach(element => {
+            element.tagReadStatus = tagstat.filter(p => p.tagId == element.tagId)[0].tagReadStatus;
+         });
+         total.value = response.total;
       });
-      total.value = response.total;
-   });
    }, timeFlush.rangeFlush);
 })
 
