@@ -2,14 +2,30 @@
 <template>
     <div class="app-container">
         <el-form :model="queryParams" ref="queryRef" v-show="showSearch" :inline="true" label-width="80px">
-            <el-form-item label="PLC代码" prop="plcCode" :rules="rules.plcCode">
+            <!-- <el-form-item label="PLC代码" prop="plcCode" :rules="rules.plcCode">
                 <el-input v-model="queryParams.plcCode" placeholder="请输入PLC代码" clearable style="width: 150px"
                     @keyup.enter="handleQuery" />
             </el-form-item>
             <el-form-item label="Tag代码" prop="tagCode" :rules="rules.tagCode">
                 <el-input v-model="queryParams.tagCode" placeholder="请输入Tag代码" clearable style="width: 150px"
                     @keyup.enter="handleQuery" />
+            </el-form-item> -->
+            
+            <el-form-item label="PLC名称" prop="plcCode" :rules="rules.plcCode">
+                <el-select v-model="queryParams.plcCode" placeholder="请选择PLC设备" clearable @keyup.enter="handleQuery"
+                    @change="plcCodeChange">
+                    <el-option v-for="item in plcOptions" :key="item.plcCode" :label="item.plcName"
+                        :value="item.plcCode"></el-option>
+                </el-select>
             </el-form-item>
+            <el-form-item label="Tag代码" prop="tagCode" :rules="rules.tagCode">
+                <el-select v-model="queryParams.tagCode" placeholder="请选择Tag代码" filterable clearable
+                    @keyup.enter="handleQuery">
+                    <el-option v-for="item in plcTagOptions" :key="item.tagCode" :label="item.tagName"
+                        :value="item.tagCode"></el-option>
+                </el-select>
+            </el-form-item>
+
             <el-form-item label="检索名" prop="field" :rules="rules.field"  v-show="false">
                 <el-input v-model="queryParams.field" placeholder="请输入检索名" clearable style="width: 150px"
                     @keyup.enter="handleQuery" />
@@ -75,47 +91,7 @@
                     </template>
                     <div id="plotLyId"></div>
                 </el-collapse-item>
-                <el-collapse-item title="Table" name="2">
-                    <div>
-
-                        <el-table :data="lineYList" @selection-change="handleSelectionChange">
-                            <!-- <el-table-column type="selection" width="55" align="center" /> -->
-                            <el-table-column label="设备代码" align="center" prop="plcCode" />
-                            <el-table-column label="点位代码" align="center" prop="tagCode" :show-overflow-tooltip="true" />
-                            <el-table-column label="点位值" align="center" prop="_value" :show-overflow-tooltip="true" />
-
-                            <el-table-column label="采集时间" align="center" prop="_time" width="200">
-                                <template #default="scope">
-                                    <span>{{ scope.row._time }}</span>
-                                </template>
-                            </el-table-column>
-                            <el-table-column label="起始时间" align="center" prop="_start" width="200">
-                                <template #default="scope">
-                                    <span>{{ scope.row._start }}</span>
-                                </template>
-                            </el-table-column>
-                            <el-table-column label="结束时间" align="center" prop="_stop" width="200">
-                                <template #default="scope">
-                                    <span>{{ scope.row._stop }}</span>
-                                </template>
-                            </el-table-column>
-                            <!-- <el-table-column label="操作" align="center" width="160" class-name="small-padding fixed-width">
-                                <template #default="scope">
-                                <el-button link type="primary" icon="Edit" @click="handleUpdate(scope.row)"
-                                    v-hasPermi="['data:plcData:edit']">修改</el-button>
-                                <el-button link type="primary" icon="Delete" @click="handleDelete(scope.row)"
-                                    v-hasPermi="['data:plcData:remove']">删除</el-button>
-                                </template>
-                            </el-table-column> 
-                            -->
-                        </el-table>
-
-
-                        <pagination v-show="total > 0" :total="total" v-model:page="queryParams.pageNum"
-                            v-model:limit="queryParams.pageSize" @pagination="getList" />
-
-                    </div>
-                </el-collapse-item>
+                 
             </el-collapse>
         </div>
     </div>
@@ -127,6 +103,7 @@
 import { momentUTC  } from '@/utils/tool'
 
 import { queryPlcLog, queryByFluxQuery } from "@/api/influxDb/influx";
+import { listTagNoPage, optionselectPlc } from "@/api/plcManage/tag";
 import { ref, inject } from "vue";
 import Plotly from 'plotly.js/dist/plotly';
 // import Plotly from '@/utils/plotly'
@@ -147,6 +124,8 @@ const multiple = ref(true);
 const total = ref(0);
 const title = ref("");
 const startEndShow = ref(false);
+const plcOptions = ref([]);
+const plcTagOptions = ref([]);
 // const aggregateQueryShow = ref(false);
 
 
@@ -164,8 +143,10 @@ const data = reactive({
     queryParams: {
         pageNum: 1,
         pageSize: 10,
-        plcCode: 'S1500',
-        tagCode: 'Tag_1',
+        // plcCode: 'S1500',
+        // tagCode: 'Tag_1',
+        plcCode: undefined,
+        tagCode: undefined,
         field: 'tag_value',
         aggregateQuery: false,
         aggregateFun: 'last',
@@ -258,70 +239,70 @@ function getList() {
         queryParams.value.startTime = queryParams.value.customDateRange[0]
         queryParams.value.stopTime = queryParams.value.customDateRange[1]
     }
-    queryPlcLog(queryParams.value).then(response => {
+    // queryPlcLog(queryParams.value).then(response => {
+    //     if (response.code == 200) {
+    //         lineYList.value = response.data;
+    //         total.value = response.total;
+    //         loading.value = false;
+    //         PlotlyShow();
+    //     } else {
+    //         proxy.$modal.msgError(response.msg);
+    //     }
+    // });
+ 
+    var bucketName = ref('scada');   //数据库名
+    var measurement = ref('plc_log');  //表名
+    var plc_code = ref(queryParams.value.plcCode);     //plc设备名
+    var tag_code = ref(queryParams.value.tagCode);     //点位名
+    var field = ref(queryParams.value.field);     //field
+    var period = ref(queryParams.value.period);          //X轴时间间隔
+    var periodUnit = ref(queryParams.value.periodUnit);    //间隔时间单位 s m h d 
+    var createEmpty = ref(false);  //是否填充缺失值 true false
+    var aggregateFun = ref(queryParams.value.aggregateFun);    //aggregate Function 聚合方法
+    var yieldName = aggregateFun;
+    var start = ref('')
+    var stop = ref('')
+    var range = ref('')
+    if (queryParams.value.dateRange == 'customRange') {
+        var startTime = ref(queryParams.value.customDateRange[0]);    //开始时间
+        var endTime = ref(queryParams.value.customDateRange[1]);      //结束时间
+        start.value = momentUTC(startTime.value );
+        stop.value = momentUTC(endTime.value );
+
+        range.value = `|> range(start: time(v: \"${start.value}\"), stop: time(v: \"${stop.value}\"))`;
+    }
+    else {
+        start.value = queryParams.value.dateRange;
+        range.value = `|> range(start: ${start.value})`;
+    }
+
+    var aggregate = ref('');
+    if (queryParams.value.aggregateQuery) {
+        aggregate.value = `|> aggregateWindow(every: ${period.value}${periodUnit.value}, fn: ${aggregateFun.value}, createEmpty: ${createEmpty.value})` +
+            `|> yield(name: \"${yieldName.value}\")`;
+    } else {
+        aggregate.value = '';
+    }
+    
+        fluxQuery.value.query = `from(bucket: \"${bucketName.value}\")` +
+        range.value +
+        `|> filter(fn: (r) => r[\"_measurement\"] == \"${measurement.value}\")` +
+        `|> filter(fn: (r) => r[\"_field\"] == \"${field.value}\")` +
+        `|> filter(fn: (r) => r[\"plc_code\"] == \"${plc_code.value}\")` +
+        `|> filter(fn: (r) => r[\"tag_code\"] == \"${tag_code.value}\")` +
+                aggregate.value;
+
+    queryByFluxQuery(fluxQuery.value).then(response => {
         if (response.code == 200) {
             lineYList.value = response.data;
             total.value = response.total;
             loading.value = false;
+            
             PlotlyShow();
         } else {
             proxy.$modal.msgError(response.msg);
         }
     });
-
-    // var bucketName = ref('scada');   //数据库名
-    // var measurement = ref('plc_log');  //表名
-    // var plc_code = ref(queryParams.value.plcCode);     //plc设备名
-    // var tag_code = ref(queryParams.value.tagCode);     //点位名
-    // var field = ref(queryParams.value.field);     //field
-    // var period = ref(queryParams.value.period);          //X轴时间间隔
-    // var periodUnit = ref(queryParams.value.periodUnit);    //间隔时间单位 s m h d 
-    // var createEmpty = ref(false);  //是否填充缺失值 true false
-    // var aggregateFun = ref(queryParams.value.aggregateFun);    //aggregate Function 聚合方法
-    // var yieldName = aggregateFun;
-
-    // var start = ref('')
-    // var stop = ref('')
-
-    // var range = ref('')
-    // if (queryParams.value.dateRange == 'customRange') {
-    //     var startTime = ref(queryParams.value.customDateRange[0]);    //开始时间
-    //     var endTime = ref(queryParams.value.customDateRange[1]);      //结束时间
-    //     start.value = momentUTC(startTime.value );
-    //     stop.value = momentUTC(endTime.value );
-    //     range.value = `|> range(start: time(v: \"${start.value}\"), stop: time(v: \"${stop.value}\"))`;
-    // }
-    // else {
-    //     start.value = queryParams.value.dateRange;
-    //     range.value = `|> range(start: ${start.value})`;
-    // }
-
-    // var aggregate = ref('');
-    // if (queryParams.value.aggregateQuery) {
-    //     aggregate.value = `|> aggregateWindow(every: ${period.value}${periodUnit.value}, fn: ${aggregateFun.value}, createEmpty: ${createEmpty.value})`+
-    //      `|> yield(name: \"${yieldName.value}\")`;
-    // } else {
-    //     aggregate.value = '';
-    // }
-
-    // fluxQuery.value.query = `from(bucket: \"${bucketName.value}\")` +
-    //     range.value +
-    //     `|> filter(fn: (r) => r[\"_measurement\"] == \"${measurement.value}\")` +
-        // `|> filter(fn: (r) => r[\"_field\"] == \"${field.value}\")` +
-    //     `|> filter(fn: (r) => r[\"plc_code\"] == \"${plc_code.value}\")` +
-    //     `|> filter(fn: (r) => r[\"tag_code\"] == \"${tag_code.value}\")` +
-    //     aggregate.value ;
-
-    // queryByFluxQuery(fluxQuery.value).then(response => {
-    // if (response.code == 200) {
-    //     lineYList.value = response.data;
-    //     total.value = response.total;
-    //     loading.value = false;
-    //     PlotlyShow();
-    // } else {
-    //     proxy.$modal.msgError(response.msg);
-    // } 
-    // });
 
 }
 
@@ -380,10 +361,7 @@ function resetQuery() {
     proxy.resetForm("queryRef");
     handleQuery();
 }
-
-const timeFlush = reactive({
-    rangeFlush: 15000,//定义定时器间隔时间 默认是15s
-})
+ 
 function dateRangeChange(value) {
     if (value == 'customRange') {
         startEndShow.value = true;
@@ -398,28 +376,23 @@ function aggregateQueryChange(value) {
         // aggregateQueryShow.value = false;
     }
 }
+  
+const timeFlush = reactive({
+    rangeFlush: 1000,//定义定时器间隔时间 
+})
 const state = reactive({
     timeInter: null,//定义定时器
-    timeFun: null,
 })
-/** 延时查询 */
-function delayHandleQuery() {
-    handleQuery();
-    state.timeFun = setTimeout(() => {
-        delayHandleQuery();
-    }, 100)
-}
-
 //组件挂载的过程
 onMounted(async () => {
     setTimeout(() => {
-        delayHandleQuery();
+        handleQuery();
     }, 1000)
 
     console.log(timeFlush.rangeFlush)
     /// 定时采集数据显示
     state.timeInter = setInterval(() => {
-        delayHandleQuery();
+        handleQuery();
     }, timeFlush.rangeFlush);
 })
 
@@ -427,16 +400,34 @@ onMounted(async () => {
 onUnmounted(() => {
     if (state.timeInter) {
         clearInterval(state.timeInter) //销毁
-        clearInterval(state.timeFun) //销毁
         state.timeInter = null
-        state.timeFun = null
     }
 })
 
-/** 多选框选中数据 */
-function handleSelectionChange(selection) {
-    ids.value = selection.map(item => item.dictId);
-    single.value = selection.length != 1;
-    multiple.value = !selection.length;
+// /** 多选框选中数据 */
+// function handleSelectionChange(selection) {
+//     ids.value = selection.map(item => item.dictId);
+//     single.value = selection.length != 1;
+//     multiple.value = !selection.length;
+// }
+
+/** 查询PLC列表 */
+function getPlcList() {
+    optionselectPlc().then(response => {
+        plcOptions.value = response.data;
+    });
 }
+
+/** plc选择 */
+async function plcCodeChange(value) {
+    await getTagCodeList(value);
+}
+/** 获取PLC的点位 */
+async function getTagCodeList(value) {
+    await listTagNoPage({ plcCode: value }).then(response => {
+        plcTagOptions.value = response.data;
+    });
+}
+
+getPlcList()
 </script>

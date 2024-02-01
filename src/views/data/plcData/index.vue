@@ -205,7 +205,7 @@ import Plotly from 'plotly.js/dist/plotly';
 import { useEchartLine } from "./js/echartLinePlc.js";
 import { listTagNoPage, optionselectPlc } from "@/api/plcManage/tag";
 
-import { parseTime, momentTime ,momentUTC} from '@/utils/tool'
+import { parseTime, momentTime, momentUTC } from '@/utils/tool'
 
 import { queryByFluxQuery } from "@/api/influxDb/influx";
 
@@ -281,7 +281,7 @@ const dataPlotLy = ref([{
     x: [],
     y: [],
     mode: 'lines+markers',
-    line: { color: 'blue',shape: 'spline'},
+    line: { color: 'blue', shape: 'spline' },
     marker: {
         color: 'red',
         // size: 12
@@ -381,8 +381,8 @@ function getList() {
     if (queryParams.value.dateRange == 'customRange') {
         var startTime = ref(queryParams.value.customDateRange[0]);    //开始时间
         var endTime = ref(queryParams.value.customDateRange[1]);      //结束时间
-        start.value = momentUTC(startTime.value );
-        stop.value = momentUTC(endTime.value );
+        start.value = momentUTC(startTime.value);
+        stop.value = momentUTC(endTime.value);
 
         range.value = `|> range(start: time(v: \"${start.value}\"), stop: time(v: \"${stop.value}\"))`;
     }
@@ -398,14 +398,14 @@ function getList() {
     } else {
         aggregate.value = '';
     }
-    
-        fluxQuery.value.query = `from(bucket: \"${bucketName.value}\")` +
+
+    fluxQuery.value.query = `from(bucket: \"${bucketName.value}\")` +
         range.value +
         `|> filter(fn: (r) => r[\"_measurement\"] == \"${measurement.value}\")` +
         `|> filter(fn: (r) => r[\"_field\"] == \"${field.value}\")` +
         `|> filter(fn: (r) => r[\"plc_code\"] == \"${plc_code.value}\")` +
         `|> filter(fn: (r) => r[\"tag_code\"] == \"${tag_code.value}\")` +
-                aggregate.value;
+        aggregate.value;
 
     queryByFluxQuery(fluxQuery.value).then(response => {
         if (response.code == 200) {
@@ -428,17 +428,17 @@ function getTablePage() {
 function PlotlyShow() {
     console.log('-----------------')
     let ctx = document.getElementById('plotLyId');
-layoutPlotLy.value.title = queryParams.value.tagCode + "历史数据";
+    layoutPlotLy.value.title = queryParams.value.tagCode + "历史数据";
     if (lineYList.value && lineYList.value.length > 0) {
-                    var x = [];
-            var y = [];
-            lineYList.value.forEach((item) => {
-                // x.push(item._time);
-                // y.push(item._value);
-                x.push(momentTime(item._time));
-                y.push(item._value);
-            });
-            dataPlotLy.value[0].x = x;
+        var x = [];
+        var y = [];
+        lineYList.value.forEach((item) => {
+            // x.push(item._time);
+            // y.push(item._value);
+            x.push(momentTime(item._time));
+            y.push(item._value);
+        });
+        dataPlotLy.value[0].x = x;
         dataPlotLy.value[0].y = y;
 
         Plotly.react(ctx, dataPlotLy.value, layoutPlotLy.value, configPlotLy.value);

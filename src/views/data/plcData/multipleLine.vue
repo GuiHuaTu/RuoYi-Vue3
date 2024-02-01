@@ -82,41 +82,7 @@
                 </div>
 
             </el-row>
-        </el-form>
-        <!-- 
-        <div>
-            <el-collapse v-model="activeNames">
-                <el-collapse-item name="1">
-                    <template #title>PlotLyMarkerLine<el-icon class="header-icon">
-                            <info-filled />
-                        </el-icon>
-                    </template>
-                    <div>
-                        <PlotFigure :options="{
-                            x: {
-                                label: '时间'
-                            },
-                            y: {
-                                label: '点位值',
-                                grid: true
-                            },
-                            marks: [
-                                // Plot.ruleY([0]),
-                                Plot.lineY(lineYList, { x: '_time', y: '_value' }),
-                            ],
-                        }" />
-                    </div> 
-
-                    <div id="plotLyId"></div>
-
-                </el-collapse-item>
-                <el-collapse-item title="EchartMarkerLine" name="2">
-                    <div id="mainLine">
-                    </div>
-                </el-collapse-item>  
-            </el-collapse>
-
-        </div> -->
+        </el-form> 
 
         <div>
             <el-tabs v-model="activeTabsName" type="border-card" @tab-click="onTabClick">
@@ -203,8 +169,7 @@ import { ref, inject } from "vue";
 import exportExcel from "@/utils/exportTableExcel"
 import print from 'print-js';
 import * as echarts from 'echarts';
-import * as Plot from "@observablehq/plot";
-import PlotFigure from "./js/PlotFigure.js";
+import * as Plot from "@observablehq/plot"; 
 import Plotly from 'plotly.js/dist/plotly';
 // import Plotly from '@/utils/plotly'
 import { useEchartLine } from "./js/echartLinePlc.js";
