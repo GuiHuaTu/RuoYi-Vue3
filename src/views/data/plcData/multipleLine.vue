@@ -82,7 +82,7 @@
                 </div>
 
             </el-row>
-        </el-form> 
+        </el-form>
 
         <div>
             <el-tabs v-model="activeTabsName" type="border-card" @tab-click="onTabClick">
@@ -169,7 +169,7 @@ import { ref, inject } from "vue";
 import exportExcel from "@/utils/exportTableExcel"
 import print from 'print-js';
 import * as echarts from 'echarts';
-import * as Plot from "@observablehq/plot"; 
+import * as Plot from "@observablehq/plot";
 import Plotly from 'plotly.js/dist/plotly';
 // import Plotly from '@/utils/plotly'
 import { useEchartLine } from "./js/echartLinePlc.js";
@@ -264,10 +264,10 @@ const layoutPlotLy = ref({
     xaxis: {
         title: '采集时间'
     },
-    yaxis: {
-        // title: '点值'
-        title: ''
-    },
+    // yaxis: {
+    //     // title: '点值'
+    //     title: ''
+    // },
 })
 const configPlotLy = ref({
     // displayModeBar: false,//不显示右上角的按钮
@@ -435,15 +435,32 @@ function PlotlyShow() {
         dataPlotLy.value = [];
         let newarr = ref(groupBy(lineYList.value, 'tag_code', 'reduce'));
 
+        let tagCount = queryParams.value.tagCode.length;
+        let g = 0.075;
+        let h = (1 - (tagCount - 1) * g) / tagCount;
         let i = 0;
-        Object.keys(newarr.value).forEach(property => {
-            const graphic = plcTagGraphic.value.filter(p => p.tagCode == property)[0].graphic;
+        Object.keys(newarr.value).forEach(tagCode => {
+            
+            //#region layoutPlotLy
+            var ykey = 'yaxis' + i + 1 ;
+            var yvalue = {
+                title: '',
+                anchor: "free",
+                domain: [(g + h) * i, (g + h) * i + h],
+                position: 0,
+            }
+            layoutPlotLy.value[ykey] = yvalue
+            //#endregion
 
-            const sourceProperty = ref(newarr.value[property])
+            //#region  dataPlotLy
+            const graphic = plcTagGraphic.value.filter(p => p.tagCode == tagCode)[0].graphic;
+
+            const sourceProperty = ref(newarr.value[tagCode])
             var trace = ref({
-                name: property,
+                name: tagCode,
                 type: graphic?.tagPlotlyType ?? 'scatter',
                 mode: graphic?.tagPlotlyMode ?? 'lines+markers',
+                yaxis: ykey,
                 x: [],
                 y: [],
                 line: {
@@ -469,8 +486,12 @@ function PlotlyShow() {
             trace.value.x = x;
             trace.value.y = y;
             dataPlotLy.value.push(trace.value);
+            //#endregion
+
             i++;
         })
+
+
 
         Plotly.react(ctx, dataPlotLy.value, layoutPlotLy.value, configPlotLy.value);
 
