@@ -45,15 +45,14 @@
                v-hasPermi="['plcManage:tag:remove']">删除</el-button>
          </el-col>
          <el-col :span="1.5">
+            <el-button type="info" plain icon="Upload" @click="handleImport"
+               v-hasPermi="['plcManage:tag:import']">导入</el-button>
+         </el-col>
+   
+         <el-col :span="1.5">
             <el-button type="warning" plain icon="Download" @click="handleExport"
                v-hasPermi="['plcManage:plc:export']">导出</el-button>
          </el-col>
-         <!-- <el-col :span="1.5">
-            <el-button type="info" plain icon="Upload"  @click="handleImport"
-               v-hasPermi="['plcManage:tag:import']">
-               导入
-            </el-button>
-         </el-col> -->
          <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
       </el-row>
 
@@ -71,15 +70,15 @@
                </div>
             </template>
          </el-table-column>
-         <el-table-column label="ID" align="center" prop="tagId">
+         <!-- <el-table-column label="ID" align="center" prop="tagId">
+         </el-table-column> -->
+         <el-table-column label="点位组" align="center" prop="tagGroup"  >
          </el-table-column>
-         <el-table-column label="点位组" align="center" prop="tagGroup" :show-overflow-tooltip="true">
+         <el-table-column label="设备代码" align="center" prop="plcCode"  >
          </el-table-column>
-         <el-table-column label="设备代码" align="center" prop="plcCode" :show-overflow-tooltip="true">
+         <el-table-column label="点位代码" align="center" prop="tagCode"  >
          </el-table-column>
-         <el-table-column label="点位代码" align="center" prop="tagCode" :show-overflow-tooltip="true">
-         </el-table-column>
-         <el-table-column label="点位名称" align="center" prop="tagName" :show-overflow-tooltip="true">
+         <el-table-column label="点位名称" align="center" prop="tagName"  >
          </el-table-column>
          <el-table-column label="地址" align="center" prop="tagAddress">
          </el-table-column>
@@ -295,8 +294,7 @@
 
 
       <!-- 导入对话框 -->
-      <el-dialog :title="upload.title" :visible.sync="upload.open" width="400px" append-to-body
-         :before-close="handleClose">
+      <el-dialog :title="upload.title" v-model="upload.open" width="400px" append-to-body>
 
          <el-form ref="uploadForm" :model="upload" :rules="rules" label-width="125px">
             <el-form-item label="设备名称" prop="plcCode" :rules="rules.plcCode">
@@ -307,24 +305,43 @@
             </el-form-item>
          </el-form>
 
-         <el-upload ref="upload" :limit="1" accept=".xlsx, .xls" :headers="upload.headers"
-            :action="upload.url + '/' + upload.updateSupport + '/' + upload.plcCode" :disabled="upload.isUploading"
-            :on-progress="handleFileUploadProgress" :on-success="handleFileSuccess" :on-error="handleUploadError"
-            @*:auto-upload="false" *@ drag>
-
-            <i class="el-icon-upload"></i>
+         <el-upload
+            ref="uploadRef"
+            :limit="1"
+            accept=".xlsx, .xls"
+            :headers="upload.headers"
+            :action="upload.url + '/' + upload.plcCode +'/' + upload.updateSupport"
+            :disabled="upload.isUploading"
+            :on-progress="handleFileUploadProgress"
+            :on-success="handleFileSuccess"
+            :on-error="handleUploadError"
+            :auto-upload="false"
+            drag
+         >
+            <el-icon class="el-icon--upload"><upload-filled /></el-icon>
             <div class="el-upload__text">将文件拖到此处，或<em>点击上传</em></div>
-            <div class="el-upload__tip text-center" slot="tip">
-               <span>仅允许导入xls、xlsx格式文件。</span>
-               <el-link type="primary" :underline="false" style="font-size:12px;vertical-align: baseline;"
-                  @click="importTemplate">下载模板</el-link>
-            </div>
+            <template #tip>
+               <div class="el-upload__tip text-center">
+                  <div class="el-upload__tip">
+                     <el-checkbox v-model="upload.updateSupport" />是否更新已经存在的数据
+                  </div>
+                  <span>仅允许导入xls、xlsx格式文件。</span>
+                  <el-link type="primary" :underline="false" style="font-size:12px;vertical-align: baseline;"
+                   @click="importTempDown">下载模板</el-link>
+               </div>
+            </template>
          </el-upload>
-         <div slot="footer" class="dialog-footer">
-            <el-button type="primary" @click="submitFileForm">确 定</el-button>
-            <el-button @click="upload.open = false">取 消</el-button>
-         </div>
+ 
+
+         <template #footer>
+            <div class="dialog-footer">
+               <el-button type="primary" @click="submitFileForm">确 定</el-button>
+               <el-button @click="upload.open = false">取 消</el-button>
+            </div>
+         </template>
       </el-dialog>
+
+
 
 
       <pagination v-show="total > 0" :total="total" :page.sync="queryParams.pageNum" :limit.sync="queryParams.pageSize"
@@ -338,9 +355,12 @@
   }
 </style >
 <script setup name="Tag">
-import { listTag, getTag, delTag, addTag, updateTag, optionselectPlc, getTagGraphic, saveTagGraphic } from "@/api/plcManage/tag";
+import { ElNotification, ElMessageBox, ElMessage, ElLoading } from 'element-plus'
+import {
+   listTag, getTag, delTag, addTag, updateTag, optionselectPlc, getTagGraphic, saveTagGraphic
+   
+} from "@/api/plcManage/tag";
 import { getToken } from "@/utils/auth.js";
-import { ElMessage, ElMessageBox } from 'element-plus'
 import { addData } from "@/api/system/dict/data";
 
 const { proxy } = getCurrentInstance();
@@ -390,29 +410,28 @@ const data = reactive({
       tagAddress: [{ required: true, message: "不能为空", trigger: "blur" }],
       tagAcquisitionFrequency: [{ required: true, message: "不能为空", trigger: "blur" },
       { type: 'number', required: true, validator: isZsNumberValidate, trigger: "blur" }],
-      tagPlotlyType:[{ required: true, message: "不能为空", trigger: "blur" }],
-      tagPlotlyMode:[{ required: true, message: "不能为空", trigger: "blur" }],
-   },
-   // 导入参数
-   upload: {
-      // 是否显示弹出层（导入）
-      open: false,
-      // 弹出层标题（导入）
-      title: "",
-      // 是否禁用上传
-      isUploading: false,
-      // 是否更新已经存在的数据
-      updateSupport: 0,
-      //设备ID
-      equipId: undefined,
-      // 设置上传的请求头部
-      headers: { Authorization: "Bearer " + getToken() },
-      // 上传的地址
-      url: "/tag/Import"
+      tagPlotlyType: [{ required: true, message: "不能为空", trigger: "blur" }],
+      tagPlotlyMode: [{ required: true, message: "不能为空", trigger: "blur" }],
    },
 });
-
-const { queryParams, form, rules, upload, formGraphic } = toRefs(data);
+/*** 导入参数 */
+const upload = reactive({
+   // 是否显示弹出层（用户导入）
+   open: false,
+   // 弹出层标题（用户导入）
+   title: "",
+   // 
+   plcCode: '',
+   // 是否禁用上传
+   isUploading: false,
+   // 是否更新已经存在的用户数据
+   updateSupport: 0,
+   // 设置上传的请求头部
+   headers: { Authorization: "Bearer " + getToken() },
+   // 上传的地址
+   url: import.meta.env.VITE_APP_BASE_API + '/tag/import'
+});
+const { queryParams, form, rules, formGraphic } = toRefs(data);
 
 // 保存选中的数据id,row-key就是要指定一个key标识这一行的数据
 function getRowKey(row) {
@@ -512,7 +531,7 @@ function submitForm(row) {
    }
    if (openGraphic.value) {
       proxy.$refs["graphicRef"].validate(valid => {
-         if (valid) { 
+         if (valid) {
             formGraphic.value.tagId = tagIdGraphic.value;
             saveTagGraphic(formGraphic.value).then(response => {
                proxy.$modal.msgSuccess("保存成功");
@@ -535,7 +554,7 @@ function handleDelete(row) {
 }
 
 function handleGraphic(row) {
-   tagIdGraphic.value = row.tagId || ids.value; 
+   tagIdGraphic.value = row.tagId || ids.value;
    getTagGraphic(tagIdGraphic.value).then(response => {
       formGraphic.value = response.data || {};
       openGraphic.value = true;
@@ -588,7 +607,53 @@ async function getTagGroupList() {
    sys_tag_group.value = list[datatype].value;
 }
 
+//#region  导入操作
+/** 导入按钮操作 */
+function handleImport() {
+   upload.title = "点位导入";
 
+   upload.open = true;
+}
+/** 下载模板操作 */
+function importTempDown() { 
+   var url = '/tag/importTempDown';
+   proxy.download(url, {
+    ...queryParams.value }, `tag_temp${new Date().getTime()}.xls`);
+}
+// 文件上传中处理
+function handleFileUploadProgress(event, file, fileList) {
+   upload.isUploading = true;
+}
+// 文件上传成功处理
+function handleFileSuccess(response, file, fileList) {
+   upload.isUploading = false;
+   proxy.$refs["uploadRef"].handleRemove(file);
+   var msg = response.msg;
+   if (response.code == '200') {
+      msg = response.msg;
+      getList();
+      upload.open = false;
+   }
+   proxy.$alert("<div style='overflow: auto;overflow-x: hidden;max-height: 70vh;padding: 10px 20px 0;'>" + msg + "</div>", "导入结果", { dangerouslyUseHTMLString: true });
+}
+function handleUploadError(err) {
+   proxy.$modal.msgError("上传文件失败");
+   upload.isUploading = false; 
+}
+// 提交上传文件
+function submitFileForm() {
+   proxy.$refs["uploadForm"].validate(valid => {
+      if (valid) {
+         proxy.$refs["uploadRef"].submit();
+      }
+   });
+}
+//#endregion  
+
+
+/**  */
+
+//新增组名
 const handleAddTagGroup = () => {
    ElMessageBox.prompt('点位数据组', '新增', {
       confirmButtonText: '确认',
@@ -620,10 +685,14 @@ const timeFlush = reactive({
 const state = reactive({
    timeInter: null,//定义定时器
 })
+
+
+//**  */
 //组件挂载的过程
 onMounted(async () => {
    /// 定时采集数据显示
    state.timeInter = setInterval(() => {
+      console.log(queryParams.value.pageNum);
       listTag(proxy.addDateRange(queryParams.value, dateRange.value)).then(response => {
          var tagstat = response.data.map(item => ({ tagId: item.tagId, tagReadStatus: item.tagReadStatus }));
 

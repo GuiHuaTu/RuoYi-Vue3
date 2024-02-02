@@ -32,7 +32,7 @@ export function getTagGraphic(tagId) {
   })
 }
 // 查询图形属性
-export function getTagGraphicCode(plcCode,tagCode) {
+export function getTagGraphicCode(plcCode, tagCode) {
   return request({
     url: '/tag/getTagGraphic/' + plcCode + '/' + tagCode,
     method: 'get'
@@ -73,7 +73,7 @@ export function delTag(tagId) {
     url: '/tag/delTag/' + tagId,
     method: 'delete'
   })
-} 
+}
 
 // 获取PLC选择框列表
 export function optionselectPlc() {
