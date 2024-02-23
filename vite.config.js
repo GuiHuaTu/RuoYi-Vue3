@@ -33,10 +33,6 @@ export default defineConfig(({ mode, command }) => {
         // https://cn.vitejs.dev/config/#server-proxy
         [envAll.VITE_APP_BASE_API]: {
           target: envAll.VITE_APP_BASE_Backend_Url , 
-          // target: 'https://127.0.0.1:7062',//本地测试
-          // target: 'https://192.168.36.195:5000',//Linux服务器
-          // target: 'https://192.168.0.101:5000',//天津铁厂192.168.0.101服务器
-
           ws: true,        //如果要代理 websockets，配置这个参数
           changeOrigin: true,  //是否跨域
           secure: false,  // 如果是https接口，需要配置这个参数
