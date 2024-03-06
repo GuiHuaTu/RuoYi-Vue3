@@ -20,7 +20,7 @@
             </el-form-item> -->
 
             <el-form-item label="Tag代码" prop="tagCode" :rules="rules.tagCode">
-                <el-select v-model="queryParams.tagCode" placeholder="请选择Tag代码" filterable clearable
+                <el-select v-model="queryParams.tagCode" placeholder="请选择Tag代码" multiple filterable clearable
                     @keyup.enter="handleQuery">
                     <el-option v-for="item in plcTagOptions" :key="item.tagCode" :label="item.tagName"
                         :value="item.tagCode"></el-option>
@@ -83,44 +83,15 @@
 
             </el-row>
         </el-form>
-        <!-- 
-        <div>
-            <el-collapse v-model="activeNames">
-                <el-collapse-item name="1">
-                    <template #title>PlotLyMarkerLine<el-icon class="header-icon">
-                            <info-filled />
-                        </el-icon>
-                    </template>
-                    <div>
-                        <PlotFigure :options="{
-                            x: {
-                                label: '时间'
-                            },
-                            y: {
-                                label: '点位值',
-                                grid: true
-                            },
-                            marks: [
-                                // Plot.ruleY([0]),
-                                Plot.lineY(lineYList, { x: '_time', y: '_value' }),
-                            ],
-                        }" />
-                    </div> 
-
-                    <div id="plotLyId"></div>
-
-                </el-collapse-item>
-                <el-collapse-item title="EchartMarkerLine" name="2">
-                    <div id="mainLine">
-                    </div>
-                </el-collapse-item>  
-            </el-collapse>
-
-        </div> -->
 
         <div>
             <el-tabs v-model="activeTabsName" type="border-card" @tab-click="onTabClick">
                 <el-tab-pane label="PlotLy折线图" name="plotLyShow">
+                    <el-row :gutter="10" class="mb8">
+                        <el-col :span="1.5">
+                            <el-button type="warning" plain icon="Refresh" @click="handleReflesh">图形属性</el-button>
+                        </el-col>
+                    </el-row>
                     <div id="plotLyId"></div>
                 </el-tab-pane>
                 <el-tab-pane label="Table表格" name="tableShow">
@@ -199,13 +170,12 @@ import exportExcel from "@/utils/exportTableExcel"
 import print from 'print-js';
 import * as echarts from 'echarts';
 import * as Plot from "@observablehq/plot";
-import PlotFigure from "./js/PlotFigure.js";
 import Plotly from 'plotly.js/dist/plotly';
 // import Plotly from '@/utils/plotly'
 import { useEchartLine } from "./js/echartLinePlc.js";
-import { listTagNoPage, optionselectPlc } from "@/api/plcManage/tag";
+import { listTagNoPage, optionselectPlc, getTagGraphicCode } from "@/api/plcManage/tag";
 
-import { parseTime, momentTime, momentUTC } from '@/utils/tool'
+import { parseTime, momentTime, momentUTC, groupBy } from '@/utils/tool'
 
 import { queryByFluxQuery } from "@/api/influxDb/influx";
 
@@ -222,6 +192,7 @@ const title = ref("");
 const startEndShow = ref(false);
 const plcOptions = ref([]);
 const plcTagOptions = ref([]);
+const plcTagGraphic = ref([]);
 
 const { proxy } = getCurrentInstance();
 const { sys_window_period_unit } = proxy.useDict("sys_window_period_unit");
@@ -276,12 +247,13 @@ const { queryParams, form, fluxQuery, rules } = toRefs(data);
 
 const activeNames = ref(['1', '2'])
 const activeTabsName = ref("plotLyShow")
+const defultColors = ['blue', 'skyblue', 'green', 'orange', 'yellow'];
 
 const dataPlotLy = ref([{
     x: [],
     y: [],
     mode: 'lines+markers',
-    line: { color: 'blue', shape: 'spline' },
+    line: { color: 'blue' },
     marker: {
         color: 'red',
         // size: 12
@@ -292,10 +264,10 @@ const layoutPlotLy = ref({
     xaxis: {
         title: '采集时间'
     },
-    yaxis: {
-        // title: '点值'
-        title: ''
-    },
+    // yaxis: {
+    //     // title: '点值'
+    //     title: ''
+    // },
 })
 const configPlotLy = ref({
     // displayModeBar: false,//不显示右上角的按钮
@@ -333,9 +305,18 @@ async function plcCodeChange(value) {
 }
 /** 获取PLC的点位 */
 async function getTagCodeList(value) {
-    await listTagNoPage({ plcCode: value }).then(response => {
-        plcTagOptions.value = response.data;
+    await listTagNoPage({ plcCode: value }).then(async response => {
+        plcTagOptions.value = response.data.filter(p => p.tagMultipleGraphic == 'Y');
+        await handleReflesh();
+        // plcTagGraphic.value = [];
+        // for (let i = 0; i < plcTagOptions.value.length; i++) {
+        //     await getTagGraphicCode(value, plcTagOptions.value[i].tagCode).then(response => {
+        //         plcTagGraphic.value.push({ plcCode: value, tagCode: plcTagOptions.value[i].tagCode, graphic: response.data });
+        //     });
+        // }
+
     });
+
 }
 /** 选项卡点击事件 */
 function onTabClick(tab, event) {
@@ -398,13 +379,22 @@ function getList() {
     } else {
         aggregate.value = '';
     }
+    var multipleTag = tag_code.value.length;
+    var multipleTagFilter = ref('');
+    var before = ref('|> filter(fn: (r) => ');
 
+    var end = ref('');
+    for (let i = 0; i < multipleTag; i++) {
+        end.value = end.value + `r[\"tag_code\"] == \"${tag_code.value[i]}\" ` + (i == multipleTag - 1 ? ' ) ' : ' or ')
+    }
+    multipleTagFilter.value = before.value + end.value;
     fluxQuery.value.query = `from(bucket: \"${bucketName.value}\")` +
         range.value +
         `|> filter(fn: (r) => r[\"_measurement\"] == \"${measurement.value}\")` +
         `|> filter(fn: (r) => r[\"_field\"] == \"${field.value}\")` +
         `|> filter(fn: (r) => r[\"plc_code\"] == \"${plc_code.value}\")` +
-        `|> filter(fn: (r) => r[\"tag_code\"] == \"${tag_code.value}\")` +
+        // `|> filter(fn: (r) => r[\"tag_code\"] == \"${tag_code.value}\" )` +
+        multipleTagFilter.value +
         aggregate.value;
 
     queryByFluxQuery(fluxQuery.value).then(response => {
@@ -428,18 +418,80 @@ function getTablePage() {
 function PlotlyShow() {
     console.log('-----------------')
     let ctx = document.getElementById('plotLyId');
-    layoutPlotLy.value.title = queryParams.value.tagCode + "历史数据";
+
+    layoutPlotLy.value.title = (queryParams.value.tagCode.length == 1 ? queryParams.value.tagCode[0] : '点位') + "历史数据";
     if (lineYList.value && lineYList.value.length > 0) {
-        var x = [];
-        var y = [];
-        lineYList.value.forEach((item) => {
-            // x.push(item._time);
-            // y.push(item._value);
-            x.push(momentTime(item._time));
-            y.push(item._value);
-        });
-        dataPlotLy.value[0].x = x;
-        dataPlotLy.value[0].y = y;
+        // var x = [];
+        // var y = [];
+        // lineYList.value.forEach((item) => {
+        //     // x.push(item._time);
+        //     // y.push(item._value);
+        //     x.push(momentTime(item._time));
+        //     y.push(item._value);
+        // });
+        // dataPlotLy.value[0].x = x;
+        // dataPlotLy.value[0].y = y;
+
+        dataPlotLy.value = [];
+        let newarr = ref(groupBy(lineYList.value, 'tag_code', 'reduce'));
+
+        let tagCount = queryParams.value.tagCode.length;
+        let g = 0.075;
+        let h = (1 - (tagCount - 1) * g) / tagCount;
+        let i = 0;
+        Object.keys(newarr.value).forEach(tagCode => {
+            
+            //#region layoutPlotLy
+            var ykey = 'yaxis' + i + 1 ;
+            var yvalue = {
+                title: '',
+                anchor: "free",
+                domain: [(g + h) * i, (g + h) * i + h],
+                position: 0,
+            }
+            layoutPlotLy.value[ykey] = yvalue
+            //#endregion
+
+            //#region  dataPlotLy
+            const graphic = plcTagGraphic.value.filter(p => p.tagCode == tagCode)[0].graphic;
+
+            const sourceProperty = ref(newarr.value[tagCode])
+            var trace = ref({
+                name: tagCode,
+                type: graphic?.tagPlotlyType ?? 'scatter',
+                mode: graphic?.tagPlotlyMode ?? 'lines+markers',
+                yaxis: ykey,
+                x: [],
+                y: [],
+                line: {
+                    dash: graphic?.tagLineDash ?? 'Solid',
+                    shape: graphic?.tagLineShape ?? 'spline',
+
+                    color: graphic?.tagLineColor ?? defultColors[0],
+                    width: graphic?.tagLineWidth ?? 2,
+                },
+                marker: {
+                    color: graphic?.tagMarkerColor ?? 'red',
+                    size: graphic?.tagMarkerSize ?? 5,
+                },
+            })
+            var x = [];
+            var y = [];
+            sourceProperty.value.forEach((item) => {
+                // x.push(item._time);
+                // y.push(item._value);
+                x.push(momentTime(item._time));
+                y.push(item._value);
+            });
+            trace.value.x = x;
+            trace.value.y = y;
+            dataPlotLy.value.push(trace.value);
+            //#endregion
+
+            i++;
+        })
+
+
 
         Plotly.react(ctx, dataPlotLy.value, layoutPlotLy.value, configPlotLy.value);
 
@@ -534,6 +586,14 @@ function handleSelectionChange(selection) {
     ids.value = selection.map(item => item.dictId);
     single.value = selection.length != 1;
     multiple.value = !selection.length;
+}
+async function handleReflesh() {
+    plcTagGraphic.value = [];
+    for (let i = 0; i < plcTagOptions.value.length; i++) {
+        await getTagGraphicCode(queryParams.value.plcCode, plcTagOptions.value[i].tagCode).then(response => {
+            plcTagGraphic.value.push({ plcCode: queryParams.value.plcCode, tagCode: plcTagOptions.value[i].tagCode, graphic: response.data });
+        });
+    }
 }
 
 /** 前端导出按钮操作 */

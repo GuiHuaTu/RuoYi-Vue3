@@ -5,11 +5,71 @@ import moment from 'moment'
  * Copyright (c) 2019 ruoyi
  */
 
+export function groupBy(arr, prop, method) {
+  switch (method) {
+    case 'reduce':
+      return arr.reduce((result, item) => {
+        const key = item[prop];
+        if (!result[key]) {
+          result[key] = [];
+        }
+        result[key].push(item);
+        return result;
+      }, {});
+    case 'forEach':
+      var grouped = ref({});
+      arr.forEach(item => {
+        const key = item[prop];
+        if (!grouped[key]) {
+          grouped[key] = [];
+        }
+        grouped[key].push(item);
+      });
+      return grouped;
+    case 'map':
+      var grouped = Object.create(null);
+      arr.map(item => {
+        const key = item[prop];
+        if (!grouped[key]) {
+          grouped[key] = [];
+        }
+        grouped[key].push(item);
+      });
+      return grouped;
+    case 'mapObj':
+      var grouped = new Map();
+      arr.forEach(item => {
+        const key = item[prop];
+        const group = grouped.get(key) || [];
+        group.push(item);
+        grouped.set(key, group);
+      });
+      return Object.fromEntries(grouped);
+    case 'lodash':
+      const _ = require('lodash');
+      return _.groupBy(arr, prop);
+    case 'mapArrow':
+      var grouped = new Map();
+      arr.forEach(item => {
+        const key = item[prop];
+        const group = grouped.get(key) || [];
+        group.push(item);
+        grouped.set(key, group);
+      });
+      return Object.fromEntries(grouped);
+    default:
+      return {};
+  }
+}
+
+
+
 // 日期格式化
  export function momentTime(time, pattern) {
-  var hm ;
-  if (typeof time === 'string') {
-    let last = time.lastIndexOf('.');
+  var hm ='';
+  let last = time.lastIndexOf('.');
+
+  if (typeof time === 'string' && last > 0) {
     hm = time.substring(last).replace('Z', '');
   }
   const format = pattern || 'YYYY-MM-DD HH:mm:ss'

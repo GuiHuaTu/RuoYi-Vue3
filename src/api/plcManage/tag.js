@@ -24,6 +24,21 @@ export function getTag(tagId) {
     method: 'get'
   })
 }
+// 查询图形属性
+export function getTagGraphic(tagId) {
+  return request({
+    url: '/tag/getTagGraphic/' + tagId,
+    method: 'get'
+  })
+}
+// 查询图形属性
+export function getTagGraphicCode(plcCode, tagCode) {
+  return request({
+    url: '/tag/getTagGraphic/' + plcCode + '/' + tagCode,
+    method: 'get'
+  })
+}
+
 
 // 新增
 export function addTag(data) {
@@ -43,13 +58,22 @@ export function updateTag(data) {
   })
 }
 
+// 保存图形属性
+export function saveTagGraphic(data) {
+  return request({
+    url: '/tag/saveTagGraphic',
+    method: 'put',
+    data: data
+  })
+}
+
 // 删除
 export function delTag(tagId) {
   return request({
     url: '/tag/delTag/' + tagId,
     method: 'delete'
   })
-} 
+}
 
 // 获取PLC选择框列表
 export function optionselectPlc() {
